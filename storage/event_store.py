@@ -1,6 +1,11 @@
 
 
 
+import json
+
+from pathlib import Path
+
+
 class EventStore:
 
     def __init__(self):
@@ -22,3 +27,6 @@ class EventStore:
     def show_summary(self):
 
         print(f"Total events: {self.count()}")
+
+
+
