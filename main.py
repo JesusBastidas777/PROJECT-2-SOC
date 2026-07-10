@@ -7,6 +7,8 @@ from normalization.event_normalizer import EventNormalizer
 
 from storage.event_store import EventStore
 
+from storage.event_reader import EventReader
+
 def main():
 
     receiver = EventReceiver()
@@ -14,6 +16,8 @@ def main():
     normalizer = EventNormalizer()
 
     store = EventStore()
+
+    reader = EventReader()
 
     raw_event = {
 
@@ -48,6 +52,12 @@ def main():
     print(store.count())
 
     store.show_summary()
+
+    print("\nEvents read from file:")
+
+    events = reader.read_events()
+
+    print(events)
 
 if __name__ == "__main__":
 
