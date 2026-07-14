@@ -53,11 +53,21 @@ def main():
 
     store.show_summary()
 
-    print("\nEvents read from file:")
-
     events = reader.read_events()
 
+    matches = reader.find_by_host("DESKTOP-01")
+
+    print("\nEvents from DESKTOP-01:")
+
+    print(matches)
+
     print(events)
+
+    matches = reader.find_by_host("DESKTOP-01")
+
+    print("\nEvents from DESKTOP-01:")
+
+    print(matches)
 
 if __name__ == "__main__":
 

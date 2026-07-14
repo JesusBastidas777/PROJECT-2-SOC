@@ -24,5 +24,25 @@ class EventReader:
 
         return events
 
+    def find_by_host(self, hostname):
+
+        events = self.read_events()
+
+        results = []
+
+        for event in events :
+
+            if event["host"]  == hostname:
+
+                results.append(event)
+
+        return results
+
+
+
+
+
+
+
 
 
