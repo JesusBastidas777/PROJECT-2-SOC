@@ -9,6 +9,8 @@ from storage.event_store import EventStore
 
 from storage.event_reader import EventReader
 
+from investigation.host_profile import HostProfile
+
 def main():
 
     receiver = EventReceiver()
@@ -18,6 +20,8 @@ def main():
     store = EventStore()
 
     reader = EventReader()
+
+    profiler = HostProfile()
 
     raw_event = {
 
@@ -68,6 +72,12 @@ def main():
     print("\nEvents from DESKTOP-01:")
 
     print(matches)
+
+    profile = profiler.build("DESKTOP-01")
+
+    print("\nhost profile:")
+
+    print(profile)
 
 if __name__ == "__main__":
 
