@@ -15,11 +15,19 @@ class HostProfile:
 
         events = self.reader.find_by_host(hostname)
 
+        processes = []
+
+        for event in events:
+
+            processes.append(event["process_name"])
+
         profile = {
 
             "hostname": hostname,
 
-            "total_events": len(events)
+            "total_events": len(events),
+
+            "processes": processes
 
         }
 
