@@ -2,6 +2,22 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 from storage.event_reader import EventReader
 
 
@@ -15,11 +31,17 @@ class HostProfile:
 
         events = self.reader.find_by_host(hostname)
 
-        processes = []
+        processes_count = {}
 
         for event in events:
 
-            processes.append(event["process_name"])
+            process_name = event["process_name"]
+
+            if process_name not in processes_count:
+
+                processes_count[process_name] = 0
+
+                processes_count[process_name] += 1
 
         profile = {
 
@@ -27,11 +49,12 @@ class HostProfile:
 
             "total_events": len(events),
 
-            "processes": processes
+            "processes": processes_count
 
         }
 
         return profile
+
 
 
 
