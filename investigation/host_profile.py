@@ -41,7 +41,7 @@ class HostProfile:
 
                 processes_count[process_name] = 0
 
-                processes_count[process_name] += 1
+            processes_count[process_name] += 1
 
         profile = {
 
@@ -49,11 +49,25 @@ class HostProfile:
 
             "total_events": len(events),
 
-            "processes": processes_count
+            "processes": processes_count,
+
+            "unique_processes": len(processes_count)
 
         }
 
         return profile
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

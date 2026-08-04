@@ -12,3 +12,7 @@
 {"host": "DESKTOP-02", "event_id": 1, "process_name": "cmd.exe"}
 {"host": "DESKTOP-01", "event_id": 4688, "process_name": "powershell.exe"}
 {"host": "DESKTOP-02", "event_id": 1, "process_name": "cmd.exe"}
+{"host": "DESKTOP-01", "event_id": 4688, "process_name": "powershell.exe"}
+{"host": "DESKTOP-02", "event_id": 1, "process_name": "cmd.exe"}
+{"host": "DESKTOP-01", "event_id": 4688, "process_name": "powershell.exe"}
+{"host": "DESKTOP-02", "event_id": 1, "process_name": "cmd.exe"}
