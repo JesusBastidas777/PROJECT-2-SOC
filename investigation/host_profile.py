@@ -33,6 +33,8 @@ class HostProfile:
 
         processes_count = {}
 
+        most_frequent_process = None
+
         for event in events:
 
             process_name = event["process_name"]
@@ -43,6 +45,13 @@ class HostProfile:
 
             processes_count[process_name] += 1
 
+        if processes_count:
+
+            most_frequent_process = max(
+            processes_count,
+            key=processes_count.get
+        )
+
         profile = {
 
             "hostname": hostname,
@@ -51,7 +60,9 @@ class HostProfile:
 
             "processes": processes_count,
 
-            "unique_processes": len(processes_count)
+            "unique_processes": len(processes_count),
+
+            "most_frequent_process": most_frequent_process
 
         }
 
