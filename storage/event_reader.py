@@ -2,6 +2,11 @@
 
 
 
+
+
+
+
+
 import json
 from pathlib import Path
 
@@ -26,23 +31,16 @@ class EventReader:
 
     def find_by_host(self, hostname):
 
-        events = self.read_events()
-
         results = []
 
-        for event in events :
+        with self.log_file.open("r") as file:
 
-            if event["host"]  == hostname:
+            for line in file:
 
-                results.append(event)
+                event = json.loads(line)
+
+                if event["host"] == hostname:
+
+                    results.append(event)
 
         return results
-
-
-
-
-
-
-
-
-
