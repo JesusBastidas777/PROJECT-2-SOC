@@ -8,16 +8,6 @@
 
 
 
-
-
-
-
-
-
-
-
-
-
 from storage.event_reader import EventReader
 
 
@@ -27,7 +17,20 @@ class HostProfile:
 
         self.reader = EventReader()
 
+        self.profile_cache = {}
+
+        self.profile_cache_mtime = {}
+
     def build(self, hostname):
+
+        current_mtime = self.reader.log_file.stat().st_mtime
+
+        if (
+            hostname in self.profile_cache
+            and self.profile_cache_mtime.get(hostname) == current_mtime
+        ):
+
+            return self.profile_cache[hostname]
 
         events = self.reader.find_by_host(hostname)
 
@@ -50,9 +53,8 @@ class HostProfile:
         if processes_count:
 
             most_frequent_process = max(
-            processes_count,
-            key = processes_count.get
-
+                processes_count,
+                key=processes_count.get
             )
 
             most_frequent_count = processes_count[most_frequent_process]
@@ -73,7 +75,17 @@ class HostProfile:
 
         }
 
+        self.profile_cache[hostname] = profile
+
+        self.profile_cache_mtime[hostname] = current_mtime
+
         return profile
+
+
+
+
+
+
 
 
 
