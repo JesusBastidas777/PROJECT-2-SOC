@@ -7,6 +7,9 @@
 
 
 
+
+
+
 import json
 from pathlib import Path
 
@@ -16,6 +19,8 @@ class EventReader:
     def __init__(self):
 
         self.log_file = Path("storage/event_logs/events.jsonl")
+
+        self.host_index = {}
 
     def read_events(self):
 
@@ -29,9 +34,9 @@ class EventReader:
 
         return events
 
-    def find_by_host(self, hostname):
+    def build_host_index(self):
 
-        results = []
+        self.host_index = {}
 
         with self.log_file.open("r") as file:
 
@@ -39,8 +44,47 @@ class EventReader:
 
                 event = json.loads(line)
 
-                if event["host"] == hostname:
+                hostname = event["host"]
 
-                    results.append(event)
+                if hostname not in self.host_index:
 
-        return results
+                    self.host_index[hostname] = []
+
+                self.host_index[hostname].append(event)
+
+        return self.host_index
+
+    def find_by_host(self, hostname):
+
+        if not self.host_index:
+
+            self.build_host_index()
+
+        return self.host_index.get(hostname, [])
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
