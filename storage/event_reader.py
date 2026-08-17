@@ -22,6 +22,8 @@ class EventReader:
 
         self.host_index = {}
 
+        self.index_mtime = None
+
     def read_events(self):
 
         events = []
@@ -52,39 +54,16 @@ class EventReader:
 
                 self.host_index[hostname].append(event)
 
+        self.index_mtime = self.log_file.stat().st_mtime
+
         return self.host_index
 
     def find_by_host(self, hostname):
 
-        if not self.host_index:
+        current_mtime = self.log_file.stat().st_mtime
+
+        if not self.host_index or current_mtime != self.index_mtime:
 
             self.build_host_index()
 
         return self.host_index.get(hostname, [])
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
