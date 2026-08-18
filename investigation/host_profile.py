@@ -81,13 +81,21 @@ class HostProfile:
 
         return profile
 
+    def show_summary(self, hostname):
 
+        profile = self.build(hostname)
 
+        print("\nHOST PROFILE")
 
+        print(f"Host: {profile['hostname']}")
 
+        print(f"Total Events: {profile['total_events']}")
 
+        print(f"Unique Processes: {profile['unique_processes']}")
 
+        print(f"Most Frequent Process: {profile['most_frequent_process']}")
 
+        print(f"Most Frequent Count: {profile['most_frequent_count']}")
 
 
 
