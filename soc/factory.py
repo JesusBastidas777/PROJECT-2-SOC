@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass
 
+from alerting.alert_service import AlertService
 from investigation.event_search import EventSearch
 from investigation.investigation_service import InvestigationService
 from normalization.event_normalizer import EventNormalizer
@@ -18,6 +19,7 @@ class SOCComponents:
     normalizer: EventNormalizer
     search: EventSearch
     investigation: InvestigationService
+    alerts: AlertService
 
 
 def build_components(config=None):
@@ -30,4 +32,5 @@ def build_components(config=None):
         normalizer=EventNormalizer(),
         search=EventSearch(reader),
         investigation=InvestigationService(reader),
+        alerts=AlertService(config.alerts_path),
     )

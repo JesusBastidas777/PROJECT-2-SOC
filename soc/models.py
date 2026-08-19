@@ -81,6 +81,24 @@ class DetectionV1:
 
 
 @dataclass(frozen=True)
+class AlertV1:
+    alert_id: str
+    timestamp: str
+    status: str
+    hostname: str
+    severity: str
+    rule_name: str
+    reason: str
+    event: Dict[str, Any] = field(default_factory=dict)
+
+    @classmethod
+    def from_mapping(cls, value):
+        return cls(**{
+            name: value[name] for name in cls.__dataclass_fields__ if name in value
+        })
+
+
+@dataclass(frozen=True)
 class InvestigationV1:
     host_profile: HostProfileV1
     timeline: List[Dict[str, Any]] = field(default_factory=list)

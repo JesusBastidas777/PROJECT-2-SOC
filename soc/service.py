@@ -63,3 +63,16 @@ class SOCService:
             data={"hostname": hostname, "detections": public},
             metadata={"count": len(public)},
         )
+
+    def create_alerts(self, hostname):
+        detections = self._components.investigation.detection_engine.analyze_host(hostname)
+        alerts = self._components.alerts.promote(detections)
+        return SOCResponseV1(data={"alerts": alerts}, metadata={"count": len(alerts)})
+
+    def search_alerts(self, **filters):
+        alerts = self._components.alerts.search(**filters)
+        return SOCResponseV1(data={"alerts": alerts}, metadata={"count": len(alerts)})
+
+    def transition_alert(self, alert_id, status):
+        alert = self._components.alerts.transition(alert_id, status)
+        return SOCResponseV1(data={"alert": alert})

@@ -24,6 +24,10 @@ class QueryError(SOCError, ValueError):
     code = "query_error"
 
 
+class AlertTransitionError(ValidationError):
+    code = "alert_transition_error"
+
+
 class StorageError(SOCError):
     code = "storage_error"
 
