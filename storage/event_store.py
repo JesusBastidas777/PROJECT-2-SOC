@@ -2,9 +2,12 @@
 
 
 import json
+import logging
 from pathlib import Path
 
 from storage.errors import StorageWriteError
+
+logger = logging.getLogger(__name__)
 
 
 def _default_log_file():
@@ -32,6 +35,7 @@ class EventStore:
         except (OSError, TypeError, ValueError) as exc:
             raise StorageWriteError(f"cannot store event in: {self.log_file}") from exc
         self.events.append(event)
+        logger.info("event stored", extra={"event_host": event.get("host")})
         return event
 
     def count(self):
@@ -39,5 +43,4 @@ class EventStore:
         return len(self.events)
 
     def show_summary(self):
-
-        print(f"Total events: {self.count()}")
+        logger.info("total events: %s", self.count())

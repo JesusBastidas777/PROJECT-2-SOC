@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 
 from storage.event_reader import EventReader
+from soc.errors import QueryError
 
 
 class EventSearch:
@@ -43,9 +44,8 @@ class EventSearch:
         limit=None,
     ):
 
-        if limit is not None and limit <= 0:
-
-            return []
+        if limit is not None and (not isinstance(limit, int) or limit <= 0):
+            raise QueryError("limit must be a positive integer", details={"limit": limit})
 
         if hostname is not None:
 
@@ -61,6 +61,12 @@ class EventSearch:
 
         start = self._parse_timestamp(start_timestamp)
         end = self._parse_timestamp(end_timestamp)
+        if start_timestamp is not None and start is None:
+            raise QueryError("start_timestamp must be a valid ISO-8601 value")
+        if end_timestamp is not None and end is None:
+            raise QueryError("end_timestamp must be a valid ISO-8601 value")
+        if start is not None and end is not None and start > end:
+            raise QueryError("start_timestamp must not be after end_timestamp")
         matches = []
 
         for event in events:

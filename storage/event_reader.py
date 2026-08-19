@@ -11,9 +11,12 @@
 
 
 import json
+import logging
 from pathlib import Path
 
 from storage.errors import StorageReadError
+
+logger = logging.getLogger(__name__)
 
 
 def _default_log_file():
@@ -41,18 +44,20 @@ class EventReader:
             return events
         try:
             with self.log_file.open("r", encoding="utf-8") as file:
-                for line in file:
+                for line_number, line in enumerate(file, 1):
                     if not line.strip():
                         continue
                     try:
                         event = json.loads(line)
                     except (json.JSONDecodeError, UnicodeDecodeError):
                         self.invalid_line_count += 1
+                        logger.warning("skipping invalid event log line %s", line_number)
                         continue
                     if isinstance(event, dict):
                         events.append(event)
                     else:
                         self.invalid_line_count += 1
+                        logger.warning("skipping non-object event log line %s", line_number)
         except OSError as exc:
             raise StorageReadError(f"cannot read event log: {self.log_file}") from exc
         return events

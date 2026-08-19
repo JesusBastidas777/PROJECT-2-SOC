@@ -10,6 +10,9 @@
 
 from storage.event_reader import EventReader
 from investigation.host_timeline import HostTimeline
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class HostProfile:
@@ -131,29 +134,9 @@ class HostProfile:
         return profile
 
     def show_summary(self, hostname):
-
         profile = self.build(hostname)
-
-        print("\nHOST PROFILE")
-
-        print(f"Host: {profile['hostname']}")
-
-        print(f"Total Events: {profile['total_events']}")
-
-        print(f"Unique Processes: {profile['unique_processes']}")
-
-        print(f"Most Frequent Process: {profile['most_frequent_process']}")
-
-        print(f"Most Frequent Count: {profile['most_frequent_count']}")
-
-        print(f"First Seen: {profile['first_seen']}")
-
-        print(f"Last Seen: {profile['last_seen']}")
-
-        print(f"Unique Users: {profile['unique_users']}")
-
-        print(f"Recent Processes: {profile['recent_processes']}")
-
+        logger.info("host profile: %s", profile)
+        return profile
 
 
 

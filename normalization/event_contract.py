@@ -2,6 +2,8 @@
 
 from datetime import datetime, timezone
 
+from soc.errors import ValidationError
+
 
 REQUIRED_FIELDS = ("timestamp", "host", "event_type", "source", "severity")
 OPTIONAL_FIELDS = (
@@ -12,7 +14,7 @@ OPTIONAL_FIELDS = (
 )
 
 
-class EventValidationError(ValueError):
+class EventValidationError(ValidationError):
     """Raised when an event cannot satisfy the canonical contract."""
 
 
