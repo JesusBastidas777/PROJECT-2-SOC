@@ -30,7 +30,13 @@ class EventNormalizer :
         "host": event.get("hostname"),
         "event_id": event.get("event_id"),
         "process_name": event.get("process_name"),
-        "timestamp": self._normalize_timestamp(event.get("timestamp"))
+        "timestamp": self._normalize_timestamp(event.get("timestamp")),
+        "pid": event.get("pid"),
+        "parent_process": event.get("parent_process"),
+        "user": event.get("user"),
+        "event_type": event.get("event_type"),
+        "source": event.get("source"),
+        "severity": event.get("severity")
 
         }
 

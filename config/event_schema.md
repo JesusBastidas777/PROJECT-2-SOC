@@ -22,6 +22,9 @@ pid
 parent_process
 user
 
+These process investigation fields are preserved during normalization when
+present. Missing optional fields are represented by `null`.
+
 ## Network Fields
 
 src_ip
@@ -44,4 +47,3 @@ confidence
 
 
 ## event id
-

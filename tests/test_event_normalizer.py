@@ -33,6 +33,39 @@ class EventNormalizerTests(unittest.TestCase):
         self.assertNotEqual(normalized["timestamp"], "not-a-date")
         self.assertIsNotNone(datetime.fromisoformat(normalized["timestamp"]).tzinfo)
 
+    def test_preserves_process_investigation_context(self):
+
+        event = {
+            "pid": 1234,
+            "parent_process": "winword.exe",
+            "user": "analyst",
+            "event_type": "process_creation",
+            "source": "edr",
+            "severity": "high",
+        }
+
+        normalized = self.normalizer.normalize(event)
+
+        for field, value in event.items():
+
+            self.assertEqual(normalized[field], value)
+
+    def test_old_process_event_receives_optional_fields(self):
+
+        normalized = self.normalizer.normalize({
+            "hostname": "DESKTOP-01",
+            "event_id": 4688,
+            "process_name": "powershell.exe",
+        })
+
+        self.assertEqual(normalized["host"], "DESKTOP-01")
+        self.assertEqual(normalized["process_name"], "powershell.exe")
+        for field in (
+            "pid", "parent_process", "user", "event_type", "source", "severity"
+        ):
+
+            self.assertIsNone(normalized[field])
+
 
 if __name__ == "__main__":
 
