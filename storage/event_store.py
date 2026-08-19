@@ -8,11 +8,11 @@ from pathlib import Path
 
 class EventStore:
 
-    def __init__(self):
+    def __init__(self, log_file=None):
 
         self.events = []
 
-        self.log_file = Path("storage/event_logs/events.jsonl")
+        self.log_file = Path(log_file or "storage/event_logs/events.jsonl")
 
         self.log_file.touch(exist_ok=True)
 
@@ -37,6 +37,5 @@ class EventStore:
     def show_summary(self):
 
         print(f"Total events: {self.count()}")
-
 
 
