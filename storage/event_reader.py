@@ -13,6 +13,8 @@
 import json
 from pathlib import Path
 
+from storage.errors import StorageReadError
+
 
 class EventReader:
 
@@ -25,24 +27,41 @@ class EventReader:
         self.process_index = {}
 
         self.index_mtime = None
+        self.invalid_line_count = 0
 
     def read_events(self):
 
         events = []
-
-        with self.log_file.open("r") as file:
-
-            for line in file:
-
-                events.append(json.loads(line))
-
+        self.invalid_line_count = 0
+        if not self.log_file.exists():
+            return events
+        try:
+            with self.log_file.open("r", encoding="utf-8") as file:
+                for line in file:
+                    if not line.strip():
+                        continue
+                    try:
+                        event = json.loads(line)
+                    except (json.JSONDecodeError, UnicodeDecodeError):
+                        self.invalid_line_count += 1
+                        continue
+                    if isinstance(event, dict):
+                        events.append(event)
+                    else:
+                        self.invalid_line_count += 1
+        except OSError as exc:
+            raise StorageReadError(f"cannot read event log: {self.log_file}") from exc
         return events
 
     def _log_signature(self):
 
-        stat = self.log_file.stat()
-
-        return stat.st_mtime_ns, stat.st_size
+        if not self.log_file.exists():
+            return None
+        try:
+            stat = self.log_file.stat()
+            return stat.st_mtime_ns, stat.st_size
+        except OSError as exc:
+            raise StorageReadError(f"cannot inspect event log: {self.log_file}") from exc
 
     def build_host_index(self):
 
@@ -50,13 +69,10 @@ class EventReader:
 
         self.process_index = {}
 
-        with self.log_file.open("r") as file:
-
-            for line in file:
-
-                event = json.loads(line)
-
-                hostname = event["host"]
+        for event in self.read_events():
+                hostname = event.get("host")
+                if hostname is None:
+                    continue
 
                 process_name = event.get("process_name")
 

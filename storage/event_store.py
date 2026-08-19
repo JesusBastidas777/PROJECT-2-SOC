@@ -2,9 +2,9 @@
 
 
 import json
-
 from pathlib import Path
 
+from storage.errors import StorageWriteError
 
 class EventStore:
 
@@ -13,22 +13,22 @@ class EventStore:
         self.events = []
 
         self.log_file = Path(log_file or "storage/event_logs/events.jsonl")
-
-        self.log_file.touch(exist_ok=True)
+        try:
+            self.log_file.parent.mkdir(parents=True, exist_ok=True)
+            self.log_file.touch(exist_ok=True)
+        except OSError as exc:
+            raise StorageWriteError(f"cannot initialize event log: {self.log_file}") from exc
 
     def store(self,event):
 
+        try:
+            payload = json.dumps(event, ensure_ascii=False)
+            with self.log_file.open("a", encoding="utf-8", newline="\n") as file:
+                file.write(payload + "\n")
+        except (OSError, TypeError, ValueError) as exc:
+            raise StorageWriteError(f"cannot store event in: {self.log_file}") from exc
         self.events.append(event)
-
-        with self.log_file.open("a") as file:
-
-            json.dump(event, file)
-
-            file.write("\n")
-
-        print("Event stored:")
-
-        print(event)
+        return event
 
     def count(self):
 
@@ -37,5 +37,4 @@ class EventStore:
     def show_summary(self):
 
         print(f"Total events: {self.count()}")
-
 
