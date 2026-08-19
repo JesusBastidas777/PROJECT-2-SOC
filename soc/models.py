@@ -99,6 +99,21 @@ class AlertV1:
 
 
 @dataclass(frozen=True)
+class MetricsV1:
+    events_stored: int
+    invalid_events: int
+    open_alerts: int
+    last_ingestion: Optional[str]
+    operation_durations_ms: Dict[str, float] = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
+class HealthV1:
+    state: str
+    checks: Dict[str, str] = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
 class InvestigationV1:
     host_profile: HostProfileV1
     timeline: List[Dict[str, Any]] = field(default_factory=list)

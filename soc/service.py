@@ -16,8 +16,10 @@ class SOCService:
         self._components = components or build_components(self.config)
 
     def ingest_event(self, event):
-        normalized = self._components.normalizer.normalize(event)
-        self._components.store.store(normalized)
+        with self._components.status.measure("ingest_event"):
+            normalized = self._components.normalizer.normalize(event)
+            self._components.store.store(normalized)
+            self._components.status.record_ingestion()
         return SOCResponseV1(
             data={"event": normalized}, metadata={"stored": True}
         )
@@ -34,16 +36,18 @@ class SOCService:
             }
         else:
             query = EventQueryV1(**filters)
-        events = self._components.search.search(**filters)
+        with self._components.status.measure("search_events"):
+            events = self._components.search.search(**filters)
         return SOCResponseV1(
             data={"events": events, "query": query}, metadata={"count": len(events)}
         )
 
     def investigate_host(self, hostname, timeline_limit=None, newest_first=True):
         limit = timeline_limit or self.config.timeline_limit
-        result = self._components.investigation.investigate_host(
-            hostname, timeline_limit=limit, newest_first=newest_first
-        )
+        with self._components.status.measure("investigate_host"):
+            result = self._components.investigation.investigate_host(
+                hostname, timeline_limit=limit, newest_first=newest_first
+            )
         investigation = InvestigationV1(
             host_profile=HostProfileV1.from_mapping(result["host_profile"]),
             timeline=list(result["timeline"]),
@@ -57,7 +61,8 @@ class SOCService:
         return SOCResponseV1(data=investigation, metadata={"hostname": hostname})
 
     def analyze_host(self, hostname):
-        detections = self._components.investigation.detection_engine.analyze_host(hostname)
+        with self._components.status.measure("analyze_host"):
+            detections = self._components.investigation.detection_engine.analyze_host(hostname)
         public = [DetectionV1.from_mapping(item) for item in detections]
         return SOCResponseV1(
             data={"hostname": hostname, "detections": public},
@@ -76,3 +81,13 @@ class SOCService:
     def transition_alert(self, alert_id, status):
         alert = self._components.alerts.transition(alert_id, status)
         return SOCResponseV1(data={"alert": alert})
+
+    def health(self):
+        health = self._components.status.health()
+        return SOCResponseV1(
+            status="success" if health.state == "healthy" else "degraded",
+            data={"health": health},
+        )
+
+    def metrics(self):
+        return SOCResponseV1(data={"metrics": self._components.status.metrics()})

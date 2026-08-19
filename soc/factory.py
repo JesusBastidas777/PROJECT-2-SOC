@@ -6,6 +6,7 @@ from alerting.alert_service import AlertService
 from investigation.event_search import EventSearch
 from investigation.investigation_service import InvestigationService
 from normalization.event_normalizer import EventNormalizer
+from monitoring.status_service import StatusService
 from soc.config import SOCConfig
 from storage.event_reader import EventReader
 from storage.event_store import EventStore
@@ -20,11 +21,13 @@ class SOCComponents:
     search: EventSearch
     investigation: InvestigationService
     alerts: AlertService
+    status: StatusService
 
 
 def build_components(config=None):
     config = config or SOCConfig.from_env()
     reader = EventReader(config.events_path)
+    alerts = AlertService(config.alerts_path)
     return SOCComponents(
         config=config,
         reader=reader,
@@ -32,5 +35,6 @@ def build_components(config=None):
         normalizer=EventNormalizer(),
         search=EventSearch(reader),
         investigation=InvestigationService(reader),
-        alerts=AlertService(config.alerts_path),
+        alerts=alerts,
+        status=StatusService(reader, alerts),
     )
