@@ -152,6 +152,16 @@ class SOCService:
             max_age_days=max_age_days, max_bytes=max_bytes
         )})
 
+    def plan_alert_compaction(self):
+        return SOCResponseV1(data={
+            "compaction": self._components.alert_compaction.plan()
+        })
+
+    def compact_alerts(self):
+        return SOCResponseV1(data={
+            "compaction": self._components.alert_compaction.apply()
+        })
+
     def health(self):
         health = self._components.status.health()
         return SOCResponseV1(

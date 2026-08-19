@@ -47,6 +47,7 @@ class SOCConfigTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             config = SOCConfig(base_dir=directory)
             self.assertEqual(config.retention_archive_dir, Path(directory) / "storage/archive")
+            self.assertEqual(config.alert_archive_dir, Path(directory) / "storage/archive")
 
     def test_factory_wires_shared_reader_without_global_state(self):
         with tempfile.TemporaryDirectory() as directory:

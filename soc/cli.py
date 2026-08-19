@@ -75,6 +75,8 @@ def build_parser():
     retention.add_argument("--max-age-days", type=float)
     retention.add_argument("--max-bytes", type=int)
     retention.add_argument("--apply", action="store_true")
+    compact = commands.add_parser("compact-alerts", help="plan or compact alert history")
+    compact.add_argument("--apply", action="store_true")
     return parser
 
 
@@ -141,6 +143,8 @@ def _invoke(service, args):
     if args.command == "retention":
         options = {"max_age_days": args.max_age_days, "max_bytes": args.max_bytes}
         return service.apply_retention(**options) if args.apply else service.plan_retention(**options)
+    if args.command == "compact-alerts":
+        return service.compact_alerts() if args.apply else service.plan_alert_compaction()
     return service.status()
 
 

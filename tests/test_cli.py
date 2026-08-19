@@ -113,6 +113,12 @@ class CLITests(unittest.TestCase):
         self.assertFalse(json.loads(plan.stdout)["data"]["retention"]["applied"])
         self.assertEqual(len(EventReader(self.events).read_events()), 1)
 
+    def test_alert_compaction_defaults_to_plan(self):
+        result = self.run_cli("compact-alerts")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        payload = json.loads(result.stdout)["data"]["compaction"]
+        self.assertFalse(payload["applied"])
+
 
 if __name__ == "__main__":
     unittest.main()

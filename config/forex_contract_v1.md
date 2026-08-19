@@ -40,6 +40,12 @@ Event retention is explicit and disabled unless a caller invokes
 read-only. Applying archives removed JSONL records and a checksummed manifest
 before atomically replacing the active log. Missing or invalid timestamps are
 retained by default and the rebuildable UID index is refreshed afterward.
+
+Alert compaction is separately available through `plan_alert_compaction` and
+`compact_alerts`. It archives the complete append-only lifecycle history and a
+checksummed manifest before keeping one current record per alert in the active
+log. Repeating compaction on an already compact log is a no-op. Event records
+are never compacted by this operation.
 Every method returns `SOCResponseV1`. Its JSON shape is:
 
 ```json
