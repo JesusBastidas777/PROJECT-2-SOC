@@ -53,6 +53,22 @@ class DetectionEngineTests(unittest.TestCase):
 
         self.assertEqual(detections[0]["rule_name"], "source_reported_high_severity")
 
+    def test_enrichment_is_stable_local_and_does_not_mutate_event(self):
+        event = {
+            "event_uid": "evt-1", "host": "HOST-01", "process_name": "psexec.exe",
+            "parent_process": "services.exe", "user": "analyst", "source": "edr",
+        }
+        original = dict(event)
+        first = DetectionEngine().analyze_events([event])[0]
+        second = DetectionEngine().analyze_events([event])[0]
+        self.assertEqual(first["detection_id"], second["detection_id"])
+        self.assertEqual(first["category"], "credential_or_admin_tool")
+        self.assertEqual(first["confidence"], "high")
+        self.assertEqual(first["event_uid"], "evt-1")
+        self.assertEqual(first["evidence"]["parent_process"], "services.exe")
+        self.assertEqual(first["context"]["hostname"], "HOST-01")
+        self.assertEqual(event, original)
+
     def test_can_analyze_events_for_one_host(self):
 
         with tempfile.TemporaryDirectory() as directory:

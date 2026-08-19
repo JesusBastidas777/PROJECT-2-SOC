@@ -72,15 +72,26 @@ class DetectionV1:
     severity: str
     reason: str
     event: Dict[str, Any] = field(default_factory=dict)
+    detection_id: Optional[str] = None
+    category: Optional[str] = None
+    confidence: Optional[str] = None
+    evidence: Dict[str, Any] = field(default_factory=dict)
+    context: Dict[str, Any] = field(default_factory=dict)
+    event_uid: Optional[str] = None
 
     @classmethod
     def from_mapping(cls, value):
-        return cls(
-            rule_name=value.get("rule_name", "unknown"),
-            severity=value.get("severity", "unknown"),
-            reason=value.get("reason", ""),
-            event=dict(value.get("event") or {}),
-        )
+        values = {
+            name: value[name] for name in cls.__dataclass_fields__ if name in value
+        }
+        values.setdefault("rule_name", "unknown")
+        values.setdefault("severity", "unknown")
+        values.setdefault("reason", "")
+        values["event"] = dict(value.get("event") or {})
+        values["evidence"] = dict(value.get("evidence") or {})
+        values["context"] = dict(value.get("context") or {})
+        values.setdefault("event_uid", values["event"].get("event_uid"))
+        return cls(**values)
 
 
 @dataclass(frozen=True)
