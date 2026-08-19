@@ -1,5 +1,4 @@
-from datetime import datetime, timezone
-
+from normalization.time_utils import parse_timestamp
 from storage.event_reader import EventReader
 
 
@@ -11,24 +10,7 @@ class ProcessCorrelation:
 
     @staticmethod
     def _parsed_timestamp(value):
-
-        if not isinstance(value, str):
-
-            return None
-
-        try:
-
-            parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
-
-            if parsed.tzinfo is None:
-
-                parsed = parsed.replace(tzinfo=timezone.utc)
-
-            return parsed
-
-        except ValueError:
-
-            return None
+        return parse_timestamp(value)
 
     def correlate(self, hostname=None):
 

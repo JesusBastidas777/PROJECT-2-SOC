@@ -33,11 +33,13 @@ class EventReader:
 
         self.process_index = {}
 
+        self.uid_index = {}
+
         self.index_mtime = None
         self.invalid_line_count = 0
+        self._snapshot = []
 
-    def read_events(self):
-
+    def _read_file(self):
         events = []
         self.invalid_line_count = 0
         if not self.log_file.exists():
@@ -62,7 +64,30 @@ class EventReader:
             raise StorageReadError(f"cannot read event log: {self.log_file}") from exc
         return events
 
-    def _log_signature(self):
+    def _ensure_snapshot(self):
+        signature = self.signature()
+        if self.index_mtime != signature:
+            self._snapshot = self._read_file()
+            self.host_index = {}
+            self.process_index = {}
+            self.uid_index = {}
+            for event in self._snapshot:
+                hostname = event.get("host")
+                process_name = event.get("process_name")
+                event_uid = event.get("event_uid")
+                if hostname is not None:
+                    self.host_index.setdefault(hostname, []).append(event)
+                if process_name is not None:
+                    self.process_index.setdefault(process_name, []).append(event)
+                if event_uid is not None:
+                    self.uid_index[event_uid] = event
+            self.index_mtime = signature
+
+    def read_events(self):
+        self._ensure_snapshot()
+        return list(self._snapshot)
+
+    def signature(self):
 
         if not self.log_file.exists():
             return None
@@ -73,52 +98,23 @@ class EventReader:
             raise StorageReadError(f"cannot inspect event log: {self.log_file}") from exc
 
     def build_host_index(self):
-
-        self.host_index = {}
-
-        self.process_index = {}
-
-        for event in self.read_events():
-                hostname = event.get("host")
-                if hostname is None:
-                    continue
-
-                process_name = event.get("process_name")
-
-                if hostname not in self.host_index:
-
-                    self.host_index[hostname] = []
-
-                self.host_index[hostname].append(event)
-
-                if process_name is not None:
-
-                    if process_name not in self.process_index:
-
-                        self.process_index[process_name] = []
-
-                    self.process_index[process_name].append(event)
-
-        self.index_mtime = self._log_signature()
-
+        self._ensure_snapshot()
         return self.host_index
 
     def find_by_host(self, hostname):
 
-        current_mtime = self._log_signature()
-
-        if not self.host_index or current_mtime != self.index_mtime:
-
-            self.build_host_index()
-
-        return self.host_index.get(hostname, [])
+        self._ensure_snapshot()
+        return list(self.host_index.get(hostname, []))
 
     def find_by_process(self, process_name):
 
-        current_mtime = self._log_signature()
+        self._ensure_snapshot()
+        return list(self.process_index.get(process_name, []))
 
-        if not self.host_index or current_mtime != self.index_mtime:
+    def find_by_uid(self, event_uid):
+        self._ensure_snapshot()
+        return self.uid_index.get(event_uid)
 
-            self.build_host_index()
-
-        return self.process_index.get(process_name, [])
+    # Kept for internal callers from older releases.
+    def _log_signature(self):
+        return self.signature()

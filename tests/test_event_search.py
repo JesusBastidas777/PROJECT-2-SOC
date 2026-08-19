@@ -74,6 +74,13 @@ class EventSearchTests(unittest.TestCase):
 
         self.assertEqual(self.search.search(hostname="UNKNOWN"), [])
 
+    def test_naive_query_timestamp_is_consistently_treated_as_utc(self):
+        matches = self.search.search(
+            start_timestamp="2026-08-18T11:00:00",
+            end_timestamp="2026-08-18T11:00:00Z",
+        )
+        self.assertEqual([event.get("process_name") for event in matches], ["cmd.exe"])
+
 
 if __name__ == "__main__":
 

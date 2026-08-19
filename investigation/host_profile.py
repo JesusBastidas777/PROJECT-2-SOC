@@ -29,7 +29,7 @@ class HostProfile:
 
     def build(self, hostname):
 
-        current_mtime = self.reader._log_signature()
+        current_mtime = self.reader.signature()
 
         if (
             hostname in self.profile_cache
@@ -89,9 +89,10 @@ class HostProfile:
         timestamped_events = [
             event for event in chronological_events if event.get("timestamp")
         ]
+        newest_events = list(reversed(chronological_events))
         recent_processes = [
             event.get("process_name")
-            for event in self.timeline.build(hostname, newest_first=True)
+            for event in newest_events
             if event.get("process_name") is not None
         ][:5]
 
@@ -137,7 +138,6 @@ class HostProfile:
         profile = self.build(hostname)
         logger.info("host profile: %s", profile)
         return profile
-
 
 
 

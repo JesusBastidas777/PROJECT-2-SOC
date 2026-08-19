@@ -63,6 +63,19 @@ class EventReaderTests(unittest.TestCase):
         self.assertEqual(len(matches), 1)
         self.assertEqual(matches[0]["process_name"], "cmd.exe")
 
+    def test_snapshot_is_reused_and_uid_index_is_available(self):
+        self.write_events([{"host": "HOST", "event_uid": "evt-1"}])
+        first = self.reader.read_events()
+        second = self.reader.read_events()
+        self.assertIsNot(first, second)
+        self.assertIs(first[0], second[0])
+        self.assertEqual(self.reader.find_by_uid("evt-1")["host"], "HOST")
+
+    def test_returned_snapshot_list_cannot_mutate_reader_cache(self):
+        events = self.reader.read_events()
+        events.clear()
+        self.assertEqual(len(self.reader.read_events()), 2)
+
 
 if __name__ == "__main__":
 

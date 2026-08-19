@@ -1,5 +1,4 @@
-from datetime import datetime, timezone
-
+from normalization.time_utils import event_time_key
 from storage.event_reader import EventReader
 
 
@@ -11,26 +10,7 @@ class HostTimeline:
 
     @staticmethod
     def _sort_key(event):
-
-        timestamp = event.get("timestamp")
-
-        if isinstance(timestamp, str):
-
-            try:
-
-                parsed = datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
-
-                if parsed.tzinfo is None:
-
-                    parsed = parsed.replace(tzinfo=timezone.utc)
-
-                return True, parsed
-
-            except ValueError:
-
-                pass
-
-        return False, datetime.min.replace(tzinfo=timezone.utc)
+        return event_time_key(event)
 
     def build(self, hostname, newest_first=False, limit=None):
 

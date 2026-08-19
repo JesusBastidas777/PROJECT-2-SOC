@@ -1,5 +1,4 @@
-from datetime import datetime, timezone
-
+from normalization.time_utils import parse_timestamp
 from storage.event_reader import EventReader
 from soc.errors import QueryError
 
@@ -12,24 +11,7 @@ class EventSearch:
 
     @staticmethod
     def _parse_timestamp(value):
-
-        if not isinstance(value, str):
-
-            return None
-
-        try:
-
-            timestamp = datetime.fromisoformat(value.replace("Z", "+00:00"))
-
-            if timestamp.tzinfo is None:
-
-                timestamp = timestamp.replace(tzinfo=timezone.utc)
-
-            return timestamp
-
-        except ValueError:
-
-            return None
+        return parse_timestamp(value)
 
     def search(
         self,
