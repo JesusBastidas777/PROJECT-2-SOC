@@ -14,7 +14,8 @@ payload = result.to_dict()
 ```
 
 The stable methods are `ingest_event`, `search_events`, `investigate_host`, `analyze_host`,
-`create_alerts`, `search_alerts`, `transition_alert`, `health`, `metrics`, and `status`.
+`create_alerts`, `search_alerts`, `transition_alert`, `list_hosts`, `get_host`, `health`,
+`metrics`, and `status`.
 Every method returns `SOCResponseV1`. Its JSON shape is:
 
 ```json
@@ -34,3 +35,7 @@ events without identity metadata remain readable.
 `ingest_event` is idempotent for identified events. Its response metadata
 contains `stored` and `duplicate`; a retry returns the previously stored event
 without appending another JSONL record.
+
+`list_hosts` and `get_host` expose a derived inventory. Host lookup ignores
+leading/trailing whitespace and letter case, while stored events retain their
+observed host value.

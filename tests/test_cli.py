@@ -35,6 +35,7 @@ class CLITests(unittest.TestCase):
             ("ingest", event), ("search", "--host", "FOREX"),
             ("investigate", "FOREX"), ("alerts", "--promote-host", "FOREX"),
             ("alerts", "--host", "FOREX", "--status", "open"), ("status",),
+            ("hosts", "forex"),
         ]
         payloads = []
         for command in commands:
@@ -45,6 +46,7 @@ class CLITests(unittest.TestCase):
         self.assertEqual(payloads[1]["metadata"]["count"], 1)
         self.assertGreaterEqual(payloads[4]["metadata"]["count"], 1)
         self.assertEqual(payloads[5]["data"]["health"]["state"], "healthy")
+        self.assertEqual(payloads[6]["data"]["host"]["hostname"], "FOREX")
 
     def test_errors_go_to_stderr_with_consistent_exit_code(self):
         result = self.run_cli("ingest", "not-json")

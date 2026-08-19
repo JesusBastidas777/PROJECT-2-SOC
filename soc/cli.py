@@ -45,6 +45,8 @@ def build_parser():
     alerts.add_argument("--set-status", choices=("acknowledged", "closed"))
 
     commands.add_parser("status", help="show health and runtime metrics")
+    hosts = commands.add_parser("hosts", help="list or inspect observed hosts")
+    hosts.add_argument("hostname", nargs="?")
     return parser
 
 
@@ -84,6 +86,8 @@ def _invoke(service, args):
             if getattr(args, name) is not None
         }
         return service.search_alerts(**filters)
+    if args.command == "hosts":
+        return service.get_host(args.hostname) if args.hostname else service.list_hosts()
     return service.status()
 
 

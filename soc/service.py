@@ -4,7 +4,7 @@ from soc.config import SOCConfig
 from soc.factory import build_components
 from soc.models import (
     CorrelationV1, DetectionV1, EventQueryV1, HostProfileV1,
-    InvestigationV1, SOCResponseV1,
+    HostRecordV1, InvestigationV1, SOCResponseV1,
 )
 
 
@@ -85,6 +85,17 @@ class SOCService:
     def transition_alert(self, alert_id, status):
         alert = self._components.alerts.transition(alert_id, status)
         return SOCResponseV1(data={"alert": alert})
+
+    def list_hosts(self):
+        hosts = [HostRecordV1.from_mapping(item) for item in self._components.inventory.list()]
+        return SOCResponseV1(data={"hosts": hosts}, metadata={"count": len(hosts)})
+
+    def get_host(self, hostname):
+        item = self._components.inventory.get(hostname)
+        return SOCResponseV1(
+            data={"host": HostRecordV1.from_mapping(item) if item else None},
+            metadata={"found": item is not None},
+        )
 
     def health(self):
         health = self._components.status.health()

@@ -115,6 +115,22 @@ class HealthV1:
 
 
 @dataclass(frozen=True)
+class HostRecordV1:
+    hostname: str
+    observed_names: List[str] = field(default_factory=list)
+    total_events: int = 0
+    first_seen: Optional[str] = None
+    last_seen: Optional[str] = None
+    sources: List[str] = field(default_factory=list)
+    max_severity: str = "unknown"
+    open_alerts: int = 0
+
+    @classmethod
+    def from_mapping(cls, value):
+        return cls(**{name: value[name] for name in cls.__dataclass_fields__ if name in value})
+
+
+@dataclass(frozen=True)
 class InvestigationV1:
     host_profile: HostProfileV1
     timeline: List[Dict[str, Any]] = field(default_factory=list)

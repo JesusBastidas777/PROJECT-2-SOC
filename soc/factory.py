@@ -4,6 +4,7 @@ from dataclasses import dataclass
 
 from alerting.alert_service import AlertService
 from investigation.event_search import EventSearch
+from inventory.host_catalog import HostCatalog
 from investigation.investigation_service import InvestigationService
 from normalization.event_normalizer import EventNormalizer
 from monitoring.status_service import StatusService
@@ -22,6 +23,7 @@ class SOCComponents:
     investigation: InvestigationService
     alerts: AlertService
     status: StatusService
+    inventory: HostCatalog
 
 
 def build_components(config=None):
@@ -37,4 +39,5 @@ def build_components(config=None):
         investigation=InvestigationService(reader),
         alerts=alerts,
         status=StatusService(reader, alerts),
+        inventory=HostCatalog(reader, alerts),
     )
