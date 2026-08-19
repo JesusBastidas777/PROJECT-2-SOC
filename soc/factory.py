@@ -14,6 +14,7 @@ from investigation.investigation_service import InvestigationService
 from normalization.event_normalizer import EventNormalizer
 from monitoring.status_service import StatusService
 from reporting.operational_summary import OperationalSummary
+from reporting.command_center import CommandCenter
 from risk.host_risk import HostRiskService
 from response.guidance import ResponseGuidance
 from soc.config import SOCConfig
@@ -54,6 +55,7 @@ class SOCComponents:
     incidents: IncidentService
     incident_timeline: IncidentTimeline
     guidance: ResponseGuidance
+    command_center: CommandCenter
 
 
 def build_components(config=None):
@@ -87,6 +89,15 @@ def build_components(config=None):
     incidents = IncidentService(
         config.incidents_path, alerts, alert_grouping, config.lock_timeout
     )
+    reporting = OperationalSummary(
+        reader, alerts, investigation.detection_engine, status
+    )
+    attention = AttentionQueue(alerts)
+    guidance = ResponseGuidance(incidents, alerts)
+    command_center = CommandCenter(
+        status, integrity, attention, inventory, risk,
+        incidents, guidance, reporting,
+    )
     return SOCComponents(
         config=config,
         reader=reader,
@@ -95,12 +106,10 @@ def build_components(config=None):
         search=EventSearch(reader),
         investigation=investigation,
         alerts=alerts,
-        attention=AttentionQueue(alerts),
+        attention=attention,
         status=status,
         inventory=inventory,
-        reporting=OperationalSummary(
-            reader, alerts, investigation.detection_engine, status
-        ),
+        reporting=reporting,
         transfer=DataTransfer(reader, store, normalizer, config.lock_timeout),
         integrity=integrity,
         host_details=HostDetail(reader, alerts, inventory),
@@ -113,5 +122,6 @@ def build_components(config=None):
         alert_grouping=alert_grouping,
         incidents=incidents,
         incident_timeline=IncidentTimeline(incidents, alerts, reader),
-        guidance=ResponseGuidance(incidents, alerts),
+        guidance=guidance,
+        command_center=command_center,
     )

@@ -179,6 +179,13 @@ class SOCService:
             summary = self._components.reporting.build(**filters)
         return SOCResponseV1(data={"summary": OperationalSummaryV1.from_mapping(summary)})
 
+    def command_center(self, **options):
+        center = self._components.command_center.build(**options)
+        return SOCResponseV1(
+            status="degraded" if center["overall_state"] == "degraded" else "success",
+            data={"command_center": center},
+        )
+
     def export_events(self, destination, **filters):
         return SOCResponseV1(data={"export": self._components.transfer.export_events(
             destination, **filters

@@ -89,6 +89,10 @@ def build_parser():
     summary.add_argument("--start", dest="start_timestamp")
     summary.add_argument("--end", dest="end_timestamp")
     summary.add_argument("--limit", type=int)
+    overview = commands.add_parser("overview", help="show the operational command center")
+    overview.add_argument("--host", dest="hostname")
+    overview.add_argument("--limit", type=int, default=5)
+    overview.add_argument("--stale-hours", type=float, default=24)
     export = commands.add_parser("export", help="export events as JSONL")
     export.add_argument("path", type=Path)
     export.add_argument("--host", dest="hostname")
@@ -228,6 +232,10 @@ def _invoke(service, args):
             if getattr(args, name) is not None
         }
         return service.operational_summary(**filters)
+    if args.command == "overview":
+        return service.command_center(
+            hostname=args.hostname, limit=args.limit, stale_hours=args.stale_hours
+        )
     if args.command == "export":
         filters = {
             name: getattr(args, name)

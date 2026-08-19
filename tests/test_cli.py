@@ -187,6 +187,9 @@ class CLITests(unittest.TestCase):
         self.assertEqual(timeline.returncode, 0, timeline.stderr)
         self.assertLessEqual(len(json.loads(timeline.stdout)["data"]["timeline"]["entries"]), 2)
         self.assertTrue(json.loads(guidance.stdout)["data"]["guidance"]["advisory_only"])
+        overview = self.run_cli("overview", "--host", "HOST")
+        self.assertEqual(overview.returncode, 0, overview.stderr)
+        self.assertTrue(json.loads(overview.stdout)["data"]["command_center"]["attention_required"])
 
 
 if __name__ == "__main__":
