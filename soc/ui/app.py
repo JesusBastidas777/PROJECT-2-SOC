@@ -43,6 +43,17 @@ class SOCApplication:
             value = alert_state(queue, self.selected_alert)
             self.selected_alert = value["selected_id"]
             return UIState(view=self.view, payload=render_alerts(value, self.max_rows), updated_at=updated)
+        if self.view == "hosts":
+            from soc.ui.screens.hosts import render_hosts
+            hosts = self.service.list_hosts().data["hosts"]
+            selected = self.hostname or (hosts[0].hostname if hosts else None)
+            risks = {host.hostname.casefold(): self.service.get_host_risk(host.hostname).data["risk"] for host in hosts[:self.max_rows]}
+            detail = self.service.get_host_detail(selected, recent_limit=self.max_rows).data["host"] if selected else None
+            risk = self.service.get_host_risk(selected).data["risk"] if selected else None
+            investigation = self.service.investigate_host(selected, timeline_limit=self.max_rows).data if detail else None
+            value = {"hosts": hosts, "risks": risks, "detail": detail,
+                     "selected_risk": risk, "investigation": investigation}
+            return UIState(view=self.view, payload=render_hosts(value, self.max_rows), updated_at=updated)
         return UIState(view=self.view, updated_at=updated)
 
     def transition_selected_alert(self, status):
