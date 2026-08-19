@@ -54,6 +54,12 @@ def build_parser():
     queue.add_argument("--priority", choices=("P1", "P2", "P3", "P4"))
     queue.add_argument("--limit", type=int, default=20)
     queue.add_argument("--include-acknowledged", action="store_true")
+    correlation = commands.add_parser(
+        "correlate-alerts", help="group related active alerts"
+    )
+    correlation.add_argument("--host", dest="hostname")
+    correlation.add_argument("--window-minutes", type=float, default=30)
+    correlation.add_argument("--exclude-singletons", action="store_true")
 
     commands.add_parser("status", help="show health and runtime metrics")
     hosts = commands.add_parser("hosts", help="list or inspect observed hosts")
@@ -161,6 +167,11 @@ def _invoke(service, args):
         return service.attention_queue(
             hostname=args.hostname, priority=args.priority, limit=args.limit,
             include_acknowledged=args.include_acknowledged,
+        )
+    if args.command == "correlate-alerts":
+        return service.correlate_alerts(
+            hostname=args.hostname, window_minutes=args.window_minutes,
+            include_singletons=not args.exclude_singletons,
         )
     if args.command == "hosts":
         if args.risk:

@@ -104,6 +104,12 @@ class SOCService:
             "count": len(queue["entries"]), "total": queue["total"],
         })
 
+    def correlate_alerts(self, **options):
+        groups = self._components.alert_grouping.correlate(**options)
+        return SOCResponseV1(
+            data={"groups": groups}, metadata={"count": len(groups), "derived": True}
+        )
+
     def transition_alert(self, alert_id, status):
         alert = self._components.alerts.transition(alert_id, status)
         return SOCResponseV1(data={"alert": alert})

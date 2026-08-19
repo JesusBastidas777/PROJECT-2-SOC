@@ -4,6 +4,7 @@ from dataclasses import dataclass
 
 from alerting.alert_service import AlertService
 from alerting.attention_queue import AttentionQueue
+from correlation.alert_grouping import AlertGrouping
 from investigation.event_search import EventSearch
 from investigation.host_detail import HostDetail
 from inventory.host_catalog import HostCatalog
@@ -46,6 +47,7 @@ class SOCComponents:
     journal: OperationalJournal
     housekeeping: HousekeepingService
     risk: HostRiskService
+    alert_grouping: AlertGrouping
 
 
 def build_components(config=None):
@@ -74,6 +76,7 @@ def build_components(config=None):
         integrity, backup, retention, alert_compaction,
         journal, config.backup_dir,
     )
+    risk = HostRiskService(inventory, alerts, investigation.detection_engine, reader)
     return SOCComponents(
         config=config,
         reader=reader,
@@ -96,5 +99,6 @@ def build_components(config=None):
         backup=backup,
         journal=journal,
         housekeeping=housekeeping,
-        risk=HostRiskService(inventory, alerts, investigation.detection_engine, reader),
+        risk=risk,
+        alert_grouping=AlertGrouping(alerts, risk),
     )
