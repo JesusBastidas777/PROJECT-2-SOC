@@ -9,13 +9,16 @@
 
 
 from storage.event_reader import EventReader
+from investigation.host_timeline import HostTimeline
 
 
 class HostProfile:
 
-    def __init__(self):
+    def __init__(self, reader=None):
 
-        self.reader = EventReader()
+        self.reader = reader or EventReader()
+
+        self.timeline = HostTimeline(self.reader)
 
         self.profile_cache = {}
 
@@ -23,7 +26,7 @@ class HostProfile:
 
     def build(self, hostname):
 
-        current_mtime = self.reader.log_file.stat().st_mtime
+        current_mtime = self.reader._log_signature()
 
         if (
             hostname in self.profile_cache
@@ -40,6 +43,10 @@ class HostProfile:
 
         most_frequent_count = 0
 
+        users = []
+
+        event_ids = []
+
         for event in events:
 
             process_name = event["process_name"]
@@ -50,6 +57,18 @@ class HostProfile:
 
             processes_count[process_name] += 1
 
+            user = event.get("user")
+
+            if user is not None and user not in users:
+
+                users.append(user)
+
+            event_id = event.get("event_id")
+
+            if event_id is not None and event_id not in event_ids:
+
+                event_ids.append(event_id)
+
         if processes_count:
 
             most_frequent_process = max(
@@ -58,6 +77,16 @@ class HostProfile:
             )
 
             most_frequent_count = processes_count[most_frequent_process]
+
+        chronological_events = self.timeline.build(hostname)
+        timestamped_events = [
+            event for event in chronological_events if event.get("timestamp")
+        ]
+        recent_processes = [
+            event.get("process_name")
+            for event in self.timeline.build(hostname, newest_first=True)
+            if event.get("process_name") is not None
+        ][:5]
 
         profile = {
 
@@ -71,7 +100,23 @@ class HostProfile:
 
             "most_frequent_process": most_frequent_process,
 
-            "most_frequent_count": most_frequent_count
+            "most_frequent_count": most_frequent_count,
+
+            "first_seen": (
+                timestamped_events[0].get("timestamp") if timestamped_events else None
+            ),
+
+            "last_seen": (
+                timestamped_events[-1].get("timestamp") if timestamped_events else None
+            ),
+
+            "users": users,
+
+            "unique_users": len(users),
+
+            "event_ids": event_ids,
+
+            "recent_processes": recent_processes
 
         }
 
@@ -97,6 +142,13 @@ class HostProfile:
 
         print(f"Most Frequent Count: {profile['most_frequent_count']}")
 
+        print(f"First Seen: {profile['first_seen']}")
+
+        print(f"Last Seen: {profile['last_seen']}")
+
+        print(f"Unique Users: {profile['unique_users']}")
+
+        print(f"Recent Processes: {profile['recent_processes']}")
 
 
 
