@@ -1,4 +1,6 @@
 import json
+import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -6,6 +8,7 @@ from pathlib import Path
 from storage.errors import StorageWriteError
 from storage.event_reader import EventReader
 from storage.event_store import EventStore
+from storage.file_lock import exclusive_file_lock
 
 
 class EventPersistenceTests(unittest.TestCase):
@@ -40,6 +43,33 @@ class EventPersistenceTests(unittest.TestCase):
             with self.assertRaises(StorageWriteError):
                 store.store({"bad": object()})
             self.assertEqual(store.count(), 0)
+
+    def test_multiple_processes_append_complete_json_lines(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "events.jsonl"
+            processes = [
+                subprocess.Popen([
+                    sys.executable, "-c",
+                    (
+                        "from storage.event_store import EventStore; "
+                        f"s=EventStore({str(path)!r}); "
+                        f"[s.store({{'host': {str(index)!r}, 'number': n}}) for n in range(5)]"
+                    ),
+                ])
+                for index in range(3)
+            ]
+            for process in processes:
+                self.assertEqual(process.wait(timeout=10), 0)
+            self.assertEqual(len(EventReader(path).read_events()), 15)
+
+    def test_lock_timeout_is_structured_and_lock_is_reusable(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "events.jsonl"
+            with exclusive_file_lock(path):
+                with self.assertRaisesRegex(StorageWriteError, "timed out"):
+                    EventStore(path, lock_timeout=0).store({"host": "blocked"})
+            EventStore(path, lock_timeout=0).store({"host": "stored"})
+            self.assertEqual(EventReader(path).read_events()[0]["host"], "stored")
 
 
 if __name__ == "__main__":

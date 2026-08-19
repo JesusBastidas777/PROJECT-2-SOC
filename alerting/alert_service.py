@@ -19,9 +19,9 @@ TRANSITIONS = {
 
 
 class AlertService:
-    def __init__(self, log_file):
+    def __init__(self, log_file, lock_timeout=5.0):
         self.reader = EventReader(log_file)
-        self.store = EventStore(log_file)
+        self.store = EventStore(log_file, lock_timeout=lock_timeout)
 
     @staticmethod
     def _identity(detection):

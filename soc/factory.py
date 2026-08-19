@@ -27,11 +27,11 @@ class SOCComponents:
 def build_components(config=None):
     config = config or SOCConfig.from_env()
     reader = EventReader(config.events_path)
-    alerts = AlertService(config.alerts_path)
+    alerts = AlertService(config.alerts_path, lock_timeout=config.lock_timeout)
     return SOCComponents(
         config=config,
         reader=reader,
-        store=EventStore(config.events_path),
+        store=EventStore(config.events_path, lock_timeout=config.lock_timeout),
         normalizer=EventNormalizer(),
         search=EventSearch(reader),
         investigation=InvestigationService(reader),

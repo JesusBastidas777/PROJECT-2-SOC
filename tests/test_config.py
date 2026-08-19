@@ -31,6 +31,12 @@ class SOCConfigTests(unittest.TestCase):
             self.assertEqual(config.events_path, Path(directory) / "env/events.jsonl")
             self.assertEqual(config.timeline_limit, 3)
 
+    def test_lock_timeout_is_configurable_and_validated(self):
+        config = SOCConfig.from_env({"SOC_LOCK_TIMEOUT": "0.25"})
+        self.assertEqual(config.lock_timeout, 0.25)
+        with self.assertRaises(ValueError):
+            SOCConfig(lock_timeout=-1)
+
     def test_factory_wires_shared_reader_without_global_state(self):
         with tempfile.TemporaryDirectory() as directory:
             config = SOCConfig(base_dir=directory)
