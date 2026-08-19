@@ -11,6 +11,10 @@ event_type
 source
 severity
 
+`timestamp` uses ISO 8601. New events without a valid timestamp receive the
+current UTC time during normalization. Older stored events without this field
+remain supported.
+
 # Process Fields
 
 process_name
@@ -40,5 +44,4 @@ confidence
 
 
 ## event id
-
 
