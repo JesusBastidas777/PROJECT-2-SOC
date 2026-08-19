@@ -10,7 +10,8 @@ from soc.ui.state import UIState
 
 
 class SOCApplication:
-    def __init__(self, service, *, view="overview", refresh_seconds=15, max_rows=20):
+    def __init__(self, service, *, view="overview", refresh_seconds=15, max_rows=20,
+                 selected_alert=None, priority=None, hostname=None, alert_status="open"):
         self.service = service
         self.workflow = FOREXWorkflow(service)
         self.view = normalize_view(view)
@@ -18,6 +19,8 @@ class SOCApplication:
             raise ValueError("refresh_seconds must be positive")
         self.refresh_seconds = float(refresh_seconds)
         self.max_rows = max(1, min(int(max_rows), 100))
+        self.selected_alert, self.priority, self.hostname = selected_alert, priority, hostname
+        self.alert_status = alert_status
 
     def collect(self):
         updated = datetime.now(timezone.utc).isoformat()
@@ -27,7 +30,25 @@ class SOCApplication:
             center = response.data["command_center"]
             return UIState(view=self.view, payload=render_overview(center, self.max_rows),
                            status=response.status, updated_at=center.get("generated_at") or updated)
+        if self.view == "alerts":
+            from soc.ui.screens.alerts import alert_state, render_alerts
+            if self.alert_status == "closed":
+                alerts = self.service.search_alerts(hostname=self.hostname, priority=self.priority, status="closed").data["alerts"]
+                queue = {"entries": [{"alert": item, "age_band": "closed", "attention_reason": "Closed alert"} for item in alerts], "total": len(alerts)}
+            else:
+                queue = self.service.attention_queue(hostname=self.hostname, priority=self.priority,
+                    limit=self.max_rows, include_acknowledged=self.alert_status == "acknowledged").data["queue"]
+                if self.alert_status == "acknowledged":
+                    queue = {**queue, "entries": [item for item in queue["entries"] if item["alert"].status == "acknowledged"]}
+            value = alert_state(queue, self.selected_alert)
+            self.selected_alert = value["selected_id"]
+            return UIState(view=self.view, payload=render_alerts(value, self.max_rows), updated_at=updated)
         return UIState(view=self.view, updated_at=updated)
+
+    def transition_selected_alert(self, status):
+        if not self.selected_alert:
+            raise ValueError("no alert is selected")
+        return self.service.transition_alert(self.selected_alert, status)
 
     def render(self, state):
         return build_shell(state, max_rows=self.max_rows)
@@ -48,7 +69,10 @@ class SOCApplication:
 
 def run_ui(service, **options):
     try:
-        return SOCApplication(service, **{k: v for k, v in options.items() if k not in {"once", "console"}}).run(
+        app = SOCApplication(service, **{k: v for k, v in options.items() if k not in {"once", "console", "alert_action"}})
+        if options.get("alert_action"):
+            app.transition_selected_alert(options["alert_action"])
+        return app.run(
             once=options.get("once", False), console=options.get("console")
         )
     except KeyboardInterrupt:

@@ -152,6 +152,11 @@ def build_parser():
     ui.add_argument("--once", action="store_true")
     ui.add_argument("--refresh", type=float, default=15.0, dest="refresh_seconds")
     ui.add_argument("--max-rows", type=int, default=20)
+    ui.add_argument("--priority", choices=("P1", "P2", "P3", "P4"))
+    ui.add_argument("--host", dest="hostname")
+    ui.add_argument("--status", choices=("open", "acknowledged", "closed"), default="open", dest="alert_status")
+    ui.add_argument("--select-alert", dest="selected_alert")
+    ui.add_argument("--alert-action", choices=("acknowledged", "closed"))
     return parser
 
 
@@ -308,7 +313,10 @@ def main(argv=None):
         if args.command == "ui":
             from soc.ui.app import run_ui
             return run_ui(SOCService(config), view=args.view, once=args.once,
-                          refresh_seconds=args.refresh_seconds, max_rows=args.max_rows)
+                          refresh_seconds=args.refresh_seconds, max_rows=args.max_rows,
+                          priority=args.priority, hostname=args.hostname,
+                          alert_status=args.alert_status, selected_alert=args.selected_alert,
+                          alert_action=args.alert_action)
         response = _invoke(SOCService(config), args)
         payload = response.to_dict()
         if args.human:
