@@ -6,6 +6,7 @@ from alerting.alert_service import AlertService
 from alerting.attention_queue import AttentionQueue
 from correlation.alert_grouping import AlertGrouping
 from investigation.event_search import EventSearch
+from incident.incident_service import IncidentService
 from investigation.host_detail import HostDetail
 from inventory.host_catalog import HostCatalog
 from investigation.investigation_service import InvestigationService
@@ -48,6 +49,7 @@ class SOCComponents:
     housekeeping: HousekeepingService
     risk: HostRiskService
     alert_grouping: AlertGrouping
+    incidents: IncidentService
 
 
 def build_components(config=None):
@@ -69,7 +71,7 @@ def build_components(config=None):
     )
     backup = BackupService(
         config.events_path, config.alerts_path, store.uid_index,
-        config.backup_dir, config.lock_timeout,
+        config.backup_dir, config.lock_timeout, incidents_path=config.incidents_path,
     )
     journal = OperationalJournal(config.maintenance_journal_path, config.lock_timeout)
     housekeeping = HousekeepingService(
@@ -77,6 +79,10 @@ def build_components(config=None):
         journal, config.backup_dir,
     )
     risk = HostRiskService(inventory, alerts, investigation.detection_engine, reader)
+    alert_grouping = AlertGrouping(alerts, risk)
+    incidents = IncidentService(
+        config.incidents_path, alerts, alert_grouping, config.lock_timeout
+    )
     return SOCComponents(
         config=config,
         reader=reader,
@@ -100,5 +106,6 @@ def build_components(config=None):
         journal=journal,
         housekeeping=housekeeping,
         risk=risk,
-        alert_grouping=AlertGrouping(alerts, risk),
+        alert_grouping=alert_grouping,
+        incidents=incidents,
     )

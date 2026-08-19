@@ -60,6 +60,16 @@ def build_parser():
     correlation.add_argument("--host", dest="hostname")
     correlation.add_argument("--window-minutes", type=float, default=30)
     correlation.add_argument("--exclude-singletons", action="store_true")
+    incidents = commands.add_parser("incidents", help="create or manage incidents")
+    incidents.add_argument("incident_id", nargs="?")
+    incidents.add_argument("--alert-id", action="append", dest="alert_ids")
+    incidents.add_argument("--group-id")
+    incidents.add_argument("--title")
+    incidents.add_argument("--summary")
+    incidents.add_argument(
+        "--status", choices=("open", "investigating", "contained", "closed")
+    )
+    incidents.add_argument("--host", dest="hostname")
 
     commands.add_parser("status", help="show health and runtime metrics")
     hosts = commands.add_parser("hosts", help="list or inspect observed hosts")
@@ -173,6 +183,17 @@ def _invoke(service, args):
             hostname=args.hostname, window_minutes=args.window_minutes,
             include_singletons=not args.exclude_singletons,
         )
+    if args.command == "incidents":
+        if args.alert_ids or args.group_id:
+            return service.create_incident(
+                alert_ids=args.alert_ids, group_id=args.group_id,
+                title=args.title, summary=args.summary,
+            )
+        if args.status and args.incident_id:
+            return service.transition_incident(args.incident_id, args.status)
+        if args.incident_id:
+            return service.get_incident(args.incident_id)
+        return service.list_incidents(status=args.status, hostname=args.hostname)
     if args.command == "hosts":
         if args.risk:
             if not args.hostname:

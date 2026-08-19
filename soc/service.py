@@ -110,6 +110,28 @@ class SOCService:
             data={"groups": groups}, metadata={"count": len(groups), "derived": True}
         )
 
+    def create_incident(self, *, alert_ids=None, group_id=None, title=None, summary=None):
+        incident = self._components.incidents.create(
+            alert_ids=alert_ids, group_id=group_id, title=title, summary=summary
+        )
+        return SOCResponseV1(data={"incident": incident})
+
+    def get_incident(self, incident_id):
+        incident = self._components.incidents.get(incident_id)
+        return SOCResponseV1(
+            data={"incident": incident}, metadata={"found": incident is not None}
+        )
+
+    def list_incidents(self, **filters):
+        incidents = self._components.incidents.list(**filters)
+        return SOCResponseV1(
+            data={"incidents": incidents}, metadata={"count": len(incidents)}
+        )
+
+    def transition_incident(self, incident_id, status):
+        incident = self._components.incidents.transition(incident_id, status)
+        return SOCResponseV1(data={"incident": incident})
+
     def transition_alert(self, alert_id, status):
         alert = self._components.alerts.transition(alert_id, status)
         return SOCResponseV1(data={"alert": alert})

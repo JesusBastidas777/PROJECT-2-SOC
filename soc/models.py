@@ -194,6 +194,24 @@ class HostRiskV1:
 
 
 @dataclass(frozen=True)
+class IncidentV1:
+    incident_id: str
+    title: str
+    status: str
+    priority: str
+    severity: str
+    hosts: List[str] = field(default_factory=list)
+    alert_ids: List[str] = field(default_factory=list)
+    created_at: Optional[str] = None
+    updated_at: Optional[str] = None
+    summary: str = ""
+
+    @classmethod
+    def from_mapping(cls, value):
+        return cls(**{name: value[name] for name in cls.__dataclass_fields__ if name in value})
+
+
+@dataclass(frozen=True)
 class OperationalSummaryV1:
     window: Dict[str, Optional[str]]
     hostname: Optional[str]

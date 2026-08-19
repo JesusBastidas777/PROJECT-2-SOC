@@ -89,6 +89,29 @@ class BackupServiceTests(unittest.TestCase):
             self.service.restore(destination, now=datetime(2026, 8, 21, tzinfo=timezone.utc))
         self.assertEqual((self.events.read_bytes(), self.alerts.read_bytes()), before)
 
+    def test_soc_backup_includes_incidents_and_legacy_manifest_remains_valid(self):
+        service = SOCService(SOCConfig(base_dir=self.root / "soc"))
+        alert = service._components.alerts.create_alert({
+            "rule_name": "test", "severity": "high", "reason": "test",
+            "event": {"host": "HOST", "timestamp": "2026-08-19T00:00:00Z"},
+        })
+        service.create_incident(alert_ids=[alert.alert_id])
+        destination = self.root / "incident-backup"
+        created = service.create_backup(destination).data["backup"]
+        self.assertIn("incidents", created["manifest"]["files"])
+        self.assertTrue(service.verify_backup(destination).data["backup"]["valid"])
+        incidents_path = service.config.incidents_path
+        incidents_path.write_text("", encoding="utf-8")
+        service.restore_backup(destination)
+        self.assertIn(incident_id := service.list_incidents().data["incidents"][0].incident_id,
+                      incidents_path.read_text(encoding="utf-8"))
+
+        legacy = self.root / "backup"
+        self.service.create(legacy, now=NOW)
+        self.assertTrue(service.verify_backup(legacy).data["backup"]["valid"])
+        service.restore_backup(legacy)
+        self.assertIn(incident_id, incidents_path.read_text(encoding="utf-8"))
+
 
 if __name__ == "__main__":
     unittest.main()

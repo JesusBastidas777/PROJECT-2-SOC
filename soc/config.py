@@ -26,6 +26,7 @@ class SOCConfig:
     alert_archive_dir: Optional[Path] = None
     backup_dir: Optional[Path] = None
     maintenance_journal_path: Optional[Path] = None
+    incidents_path: Optional[Path] = None
 
     def __post_init__(self):
         base_dir = Path(self.base_dir).expanduser().resolve()
@@ -52,6 +53,10 @@ class SOCConfig:
         object.__setattr__(
             self, "maintenance_journal_path",
             _path(str(self.maintenance_journal_path or "storage/maintenance/operations.jsonl"), base_dir),
+        )
+        object.__setattr__(
+            self, "incidents_path",
+            _path(str(self.incidents_path or "storage/incident_logs/incidents.jsonl"), base_dir),
         )
         if self.timeline_limit <= 0:
             raise ValueError("timeline_limit must be positive")
@@ -86,6 +91,9 @@ class SOCConfig:
             "backup_dir": overrides.pop("backup_dir", values.get("SOC_BACKUP_DIR")),
             "maintenance_journal_path": overrides.pop(
                 "maintenance_journal_path", values.get("SOC_MAINTENANCE_JOURNAL_PATH")
+            ),
+            "incidents_path": overrides.pop(
+                "incidents_path", values.get("SOC_INCIDENTS_PATH")
             ),
         }
         if overrides:

@@ -28,6 +28,10 @@ class AlertTransitionError(ValidationError):
     code = "alert_transition_error"
 
 
+class IncidentTransitionError(ValidationError):
+    code = "incident_transition_error"
+
+
 class StorageError(SOCError):
     code = "storage_error"
 

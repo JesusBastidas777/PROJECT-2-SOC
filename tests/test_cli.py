@@ -161,6 +161,28 @@ class CLITests(unittest.TestCase):
         self.assertEqual(duplicate.returncode, 1)
         self.assertEqual(json.loads(destination.read_text())["report_version"], "1.0")
 
+    def test_incident_create_get_and_transition(self):
+        event = json.dumps({
+            "host": "HOST", "event_type": "process_creation", "source": "edr",
+            "severity": "high", "process_name": "psexec.exe",
+            "timestamp": "2026-08-19T00:00:00Z",
+        })
+        self.run_cli("ingest", event)
+        promoted = json.loads(self.run_cli("alerts", "--promote-host", "HOST").stdout)
+        alert_id = promoted["data"]["alerts"][0]["alert_id"]
+        created = self.run_cli("incidents", "--alert-id", alert_id)
+        self.assertEqual(created.returncode, 0, created.stderr)
+        incident_id = json.loads(created.stdout)["data"]["incident"]["incident_id"]
+        fetched = self.run_cli("incidents", incident_id)
+        transitioned = self.run_cli(
+            "incidents", incident_id, "--status", "investigating"
+        )
+        self.assertTrue(json.loads(fetched.stdout)["metadata"]["found"])
+        self.assertEqual(
+            json.loads(transitioned.stdout)["data"]["incident"]["status"],
+            "investigating",
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
