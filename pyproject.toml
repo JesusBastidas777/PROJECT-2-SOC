@@ -13,4 +13,8 @@ dependencies = ["rich==15.0.0"]
 soc = "soc.cli:main"
 
 [tool.setuptools.packages.find]
-include = ["soc*"]
+include = [
+  "alerting*", "correlation*", "detection*", "incident*", "ingestion*",
+  "inventory*", "investigation*", "maintenance*", "monitoring*",
+  "normalization*", "reporting*", "response*", "risk*", "soc*", "storage*"
+]

@@ -17,10 +17,13 @@ def build_shell(state, max_rows=20):
         Text(name.upper(), style=INFO if name == state.view else MUTED)
         for name in VIEWS
     ])
-    if state.error:
+    if state.error and state.payload is None:
         body = Panel(Text(state.error, style=CRITICAL), title="DEGRADED", border_style=CRITICAL)
     elif state.payload is not None:
-        body = state.payload
+        body = Group(
+            Panel(Text(f"Refresh degraded: {state.error}", style=CRITICAL), border_style=CRITICAL)
+            if state.error else Text(""), state.payload
+        )
     else:
         body = Panel(
             Text(f"{state.view.title()} view is ready", style=INFO),

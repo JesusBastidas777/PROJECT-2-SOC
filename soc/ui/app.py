@@ -1,5 +1,6 @@
 import os
 import time
+from dataclasses import replace
 from datetime import datetime, timezone
 
 from soc import FOREXWorkflow
@@ -92,14 +93,25 @@ class SOCApplication:
     def render(self, state):
         return build_shell(state, max_rows=self.max_rows)
 
+    def refresh(self, previous=None, *, include_detail=False):
+        """Collect one read-only snapshot, preserving the last good view on failure."""
+        try:
+            return self.collect()
+        except Exception as error:
+            description = describe_error(error, include_detail=include_detail)
+            if previous is not None:
+                return replace(previous, status="degraded", stale=True,
+                               error=description["message"],
+                               metadata={**previous.metadata, "error": description})
+            return UIState(view=self.view, status="degraded", stale=True,
+                           error=description["message"], metadata={"error": description})
+
     def run(self, *, once=False, console=None):
         from rich.console import Console
         console = console or Console(no_color="NO_COLOR" in os.environ, highlight=False, markup=False)
+        state = None
         while True:
-            try:
-                state = self.collect()
-            except Exception as error:
-                state = UIState(view=self.view, status="degraded", error=describe_error(error)["message"])
+            state = self.refresh(state)
             console.print(self.render(state))
             if once:
                 return 0
