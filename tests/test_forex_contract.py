@@ -5,12 +5,13 @@ import unittest
 
 class FOREXContractTests(unittest.TestCase):
     def test_forex_uses_only_public_v1_interface(self):
-        from soc import SOCConfig, SOCService
+        from soc import FOREXAdapter, SOCConfig, SOCService
         from soc.models import EventQueryV1
 
         with tempfile.TemporaryDirectory() as directory:
             service = SOCService(SOCConfig(base_dir=directory))
-            service.ingest_event({
+            FOREXAdapter().ingest(service, {
+                "forex_event_id": "contract-1",
                 "hostname": "FOREX", "event_type": "process_creation", "source": "forex",
                 "severity": "low", "timestamp": "2026-08-18T00:00:00Z",
             })

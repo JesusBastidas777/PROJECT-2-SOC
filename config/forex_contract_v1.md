@@ -55,3 +55,8 @@ JSONL transfer uses the same validation and idempotency rules as direct
 ingestion. Integrity auditing is read-only. Repair is explicit and runs under
 an exclusive lock, preserving the original as a backup and copying invalid
 records with line details to a quarantine JSONL file.
+
+FOREX may optionally use the public `FOREXAdapter` to map `terminal_id`,
+`type`, and `forex_event_id` into the canonical contract. The adapter preserves
+unknown producer fields and delegates validation and storage to `SOCService`.
+See `config/forex_integration.md` for an executable reference workflow.
