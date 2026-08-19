@@ -178,6 +178,22 @@ class HostDetailV1:
 
 
 @dataclass(frozen=True)
+class HostRiskV1:
+    hostname: str
+    known_host: bool
+    score: int
+    level: str
+    factors: List[Dict[str, Any]] = field(default_factory=list)
+    calculated_at: Optional[str] = None
+    explanation: str = ""
+    heuristic: bool = True
+
+    @classmethod
+    def from_mapping(cls, value):
+        return cls(**{name: value[name] for name in cls.__dataclass_fields__ if name in value})
+
+
+@dataclass(frozen=True)
 class OperationalSummaryV1:
     window: Dict[str, Optional[str]]
     hostname: Optional[str]

@@ -104,6 +104,9 @@ class CLITests(unittest.TestCase):
         self.assertEqual(detailed.returncode, 0, detailed.stderr)
         self.assertEqual(basic["data"]["host"]["total_events"], 1)
         self.assertEqual(json.loads(detailed.stdout)["data"]["host"]["total_events"], 1)
+        risk = self.run_cli("hosts", "FOREX", "--risk")
+        self.assertEqual(risk.returncode, 0, risk.stderr)
+        self.assertTrue(json.loads(risk.stdout)["data"]["risk"]["heuristic"])
 
     def test_retention_defaults_to_a_read_only_plan(self):
         self.run_cli("ingest", json.dumps({

@@ -11,6 +11,7 @@ from investigation.investigation_service import InvestigationService
 from normalization.event_normalizer import EventNormalizer
 from monitoring.status_service import StatusService
 from reporting.operational_summary import OperationalSummary
+from risk.host_risk import HostRiskService
 from soc.config import SOCConfig
 from storage.event_reader import EventReader
 from storage.event_store import EventStore
@@ -44,6 +45,7 @@ class SOCComponents:
     backup: BackupService
     journal: OperationalJournal
     housekeeping: HousekeepingService
+    risk: HostRiskService
 
 
 def build_components(config=None):
@@ -94,4 +96,5 @@ def build_components(config=None):
         backup=backup,
         journal=journal,
         housekeeping=housekeeping,
+        risk=HostRiskService(inventory, alerts, investigation.detection_engine, reader),
     )

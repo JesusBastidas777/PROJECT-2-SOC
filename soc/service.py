@@ -4,7 +4,8 @@ from soc.config import SOCConfig
 from soc.factory import build_components
 from soc.models import (
     CorrelationV1, DetectionV1, EventQueryV1, HostProfileV1,
-    HostDetailV1, HostRecordV1, InvestigationV1, OperationalSummaryV1, SOCResponseV1,
+    HostDetailV1, HostRecordV1, HostRiskV1, InvestigationV1, OperationalSummaryV1,
+    SOCResponseV1,
 )
 
 
@@ -123,6 +124,13 @@ class SOCService:
         return SOCResponseV1(
             data={"host": HostDetailV1.from_mapping(item) if item else None},
             metadata={"found": item is not None, "hostname": hostname},
+        )
+
+    def get_host_risk(self, hostname):
+        risk = self._components.risk.calculate(hostname)
+        return SOCResponseV1(
+            data={"risk": HostRiskV1.from_mapping(risk)},
+            metadata={"hostname": hostname, "known_host": risk["known_host"]},
         )
 
     def operational_summary(self, **filters):
