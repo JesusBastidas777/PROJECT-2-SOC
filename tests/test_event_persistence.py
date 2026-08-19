@@ -84,6 +84,63 @@ class EventPersistenceTests(unittest.TestCase):
             self.assertEqual(existing, first)
             self.assertEqual(len(EventReader(path).read_events()), 3)
 
+    def test_uid_index_rebuilds_when_missing_corrupt_or_stale(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "events.jsonl"
+            store = EventStore(path)
+            store.store_once({"host": "A", "event_uid": "evt-1"})
+            index_path = store.uid_index.path
+            meta_path = store.uid_index.meta_path
+            self.assertTrue(index_path.exists())
+
+            index_path.write_text("truncated", encoding="utf-8")
+            rebuilt = EventStore(path)
+            _, inserted = rebuilt.store_once({"host": "A", "event_uid": "evt-1"})
+            self.assertFalse(inserted)
+
+            meta_path.unlink()
+            rebuilt = EventStore(path)
+            _, inserted = rebuilt.store_once({"host": "A", "event_uid": "evt-2"})
+            self.assertTrue(inserted)
+
+            with path.open("a", encoding="utf-8") as output:
+                output.write(json.dumps({"host": "A", "event_uid": "evt-external"}) + "\n")
+            rebuilt = EventStore(path)
+            _, inserted = rebuilt.store_once({"host": "A", "event_uid": "evt-external"})
+            self.assertFalse(inserted)
+            self.assertEqual(len(EventReader(path).read_events()), 3)
+
+    def test_multiple_processes_store_one_copy_of_the_same_uid(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "events.jsonl"
+            command = (
+                "from storage.event_store import EventStore; "
+                f"EventStore({str(path)!r}).store_once({{'host':'A','event_uid':'evt-shared'}})"
+            )
+            processes = [
+                subprocess.Popen([sys.executable, "-c", command]) for _ in range(4)
+            ]
+            for process in processes:
+                self.assertEqual(process.wait(timeout=10), 0)
+            self.assertEqual(len(EventReader(path).read_events()), 1)
+
+    def test_index_update_failure_never_creates_a_phantom_uid(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "events.jsonl"
+            store = EventStore(path)
+            original = store.uid_index._save_meta
+
+            def fail():
+                raise OSError("simulated index failure")
+
+            store.uid_index._save_meta = fail
+            _, inserted = store.store_once({"host": "A", "event_uid": "evt-safe"})
+            self.assertTrue(inserted)
+            store.uid_index._save_meta = original
+            duplicate = EventStore(path).store_once({"host": "A", "event_uid": "evt-safe"})
+            self.assertFalse(duplicate[1])
+            self.assertEqual(len(EventReader(path).read_events()), 1)
+
 
 if __name__ == "__main__":
     unittest.main()
