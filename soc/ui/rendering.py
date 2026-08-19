@@ -19,6 +19,8 @@ def build_shell(state, max_rows=20):
     ])
     if state.error:
         body = Panel(Text(state.error, style=CRITICAL), title="DEGRADED", border_style=CRITICAL)
+    elif state.payload is not None:
+        body = state.payload
     else:
         body = Panel(
             Text(f"{state.view.title()} view is ready", style=INFO),

@@ -15,7 +15,9 @@ from soc.ui.theme import CRITICAL, HEALTHY, INFO, MUTED, TITLE
 
 class UIService:
     def ingest_event(self): pass
-    def command_center(self): pass
+    def command_center(self, **options):
+        from soc.models import SOCResponseV1
+        return SOCResponseV1(data={"command_center": {"overall_state": "clear"}})
     def get_host_risk(self): pass
     def list_incidents(self): pass
 

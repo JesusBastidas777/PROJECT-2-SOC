@@ -20,7 +20,14 @@ class SOCApplication:
         self.max_rows = max(1, min(int(max_rows), 100))
 
     def collect(self):
-        return UIState(view=self.view, updated_at=datetime.now(timezone.utc).isoformat())
+        updated = datetime.now(timezone.utc).isoformat()
+        if self.view == "overview":
+            from soc.ui.screens.overview import render_overview
+            response = self.service.command_center(limit=self.max_rows)
+            center = response.data["command_center"]
+            return UIState(view=self.view, payload=render_overview(center, self.max_rows),
+                           status=response.status, updated_at=center.get("generated_at") or updated)
+        return UIState(view=self.view, updated_at=updated)
 
     def render(self, state):
         return build_shell(state, max_rows=self.max_rows)
