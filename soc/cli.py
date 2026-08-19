@@ -73,6 +73,10 @@ def build_parser():
     incidents.add_argument("--timeline", action="store_true")
     incidents.add_argument("--sort-order", choices=("oldest", "newest"), default="oldest")
     incidents.add_argument("--limit", type=int, default=100)
+    recommend = commands.add_parser("recommend", help="show advisory response guidance")
+    recommend_subject = recommend.add_mutually_exclusive_group(required=True)
+    recommend_subject.add_argument("--incident", dest="incident_id")
+    recommend_subject.add_argument("--alert", dest="alert_id")
 
     commands.add_parser("status", help="show health and runtime metrics")
     hosts = commands.add_parser("hosts", help="list or inspect observed hosts")
@@ -203,6 +207,10 @@ def _invoke(service, args):
         if args.incident_id:
             return service.get_incident(args.incident_id)
         return service.list_incidents(status=args.status, hostname=args.hostname)
+    if args.command == "recommend":
+        return service.recommend_response(
+            incident_id=args.incident_id, alert_id=args.alert_id
+        )
     if args.command == "hosts":
         if args.risk:
             if not args.hostname:

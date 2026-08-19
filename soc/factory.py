@@ -15,6 +15,7 @@ from normalization.event_normalizer import EventNormalizer
 from monitoring.status_service import StatusService
 from reporting.operational_summary import OperationalSummary
 from risk.host_risk import HostRiskService
+from response.guidance import ResponseGuidance
 from soc.config import SOCConfig
 from storage.event_reader import EventReader
 from storage.event_store import EventStore
@@ -52,6 +53,7 @@ class SOCComponents:
     alert_grouping: AlertGrouping
     incidents: IncidentService
     incident_timeline: IncidentTimeline
+    guidance: ResponseGuidance
 
 
 def build_components(config=None):
@@ -111,4 +113,5 @@ def build_components(config=None):
         alert_grouping=alert_grouping,
         incidents=incidents,
         incident_timeline=IncidentTimeline(incidents, alerts, reader),
+        guidance=ResponseGuidance(incidents, alerts),
     )

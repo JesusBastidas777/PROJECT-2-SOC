@@ -139,6 +139,12 @@ class SOCService:
             metadata={"count": len(timeline["entries"]), "total": timeline["total"]},
         )
 
+    def recommend_response(self, *, incident_id=None, alert_id=None):
+        guidance = self._components.guidance.recommend(
+            incident_id=incident_id, alert_id=alert_id
+        )
+        return SOCResponseV1(data={"guidance": guidance})
+
     def transition_alert(self, alert_id, status):
         alert = self._components.alerts.transition(alert_id, status)
         return SOCResponseV1(data={"alert": alert})

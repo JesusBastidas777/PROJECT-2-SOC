@@ -178,6 +178,7 @@ class CLITests(unittest.TestCase):
             "incidents", incident_id, "--status", "investigating"
         )
         timeline = self.run_cli("incidents", incident_id, "--timeline", "--limit", "2")
+        guidance = self.run_cli("recommend", "--incident", incident_id)
         self.assertTrue(json.loads(fetched.stdout)["metadata"]["found"])
         self.assertEqual(
             json.loads(transitioned.stdout)["data"]["incident"]["status"],
@@ -185,6 +186,7 @@ class CLITests(unittest.TestCase):
         )
         self.assertEqual(timeline.returncode, 0, timeline.stderr)
         self.assertLessEqual(len(json.loads(timeline.stdout)["data"]["timeline"]["entries"]), 2)
+        self.assertTrue(json.loads(guidance.stdout)["data"]["guidance"]["advisory_only"])
 
 
 if __name__ == "__main__":
