@@ -44,6 +44,10 @@ class FOREXWorkflow:
     REPORT_VERSION = "1.0"
 
     def __init__(self, service, adapter=None):
+        if not all(hasattr(service, name) for name in (
+            "ingest_event", "command_center", "get_host_risk", "list_incidents"
+        )):
+            raise TypeError("service must provide the public SOCService interface")
         self.service = service
         self.adapter = adapter or FOREXAdapter()
 
@@ -79,6 +83,8 @@ class FOREXWorkflow:
 
     def security_posture(self, terminal_id=None):
         """Return a compact posture using exclusively public SOCService calls."""
+        if terminal_id is not None and (not isinstance(terminal_id, str) or not terminal_id.strip()):
+            raise ValueError("terminal_id must be a non-empty string")
         center_response = self.service.command_center(hostname=terminal_id, limit=5)
         center = center_response.data["command_center"]
         if terminal_id is not None:
@@ -99,6 +105,9 @@ class FOREXWorkflow:
         risk_hostname = (
             risk.hostname if hasattr(risk, "hostname") else risk.get("hostname")
         )
+        risk_known = (
+            risk.known_host if hasattr(risk, "known_host") else risk.get("known_host", False)
+        )
         if center_response.status == "degraded" or center["overall_state"] == "degraded":
             state = "degraded"
         elif risk_level in {"high", "critical"} or urgent_alerts:
@@ -117,6 +126,8 @@ class FOREXWorkflow:
             next_step = "Continue normal monitoring."
         return SOCResponseV1(data={
             "posture": {
+                "scope": "terminal" if terminal_id else "global",
+                "observed": bool(risk_known) if terminal_id else True,
                 "state": state,
                 "attention_required": state != "clear",
                 "risk": {

@@ -89,7 +89,18 @@ class FOREXAdapterTests(unittest.TestCase):
         self.assertTrue(posture["attention_required"])
         self.assertGreaterEqual(posture["urgent_alerts"], 1)
         self.assertNotIn("events", posture)
+        self.assertEqual(posture["scope"], "terminal")
+        self.assertTrue(posture["observed"])
         self.assertEqual(global_posture["schema_version"], "1.0")
+
+    def test_unknown_terminal_returns_safe_unobserved_posture(self):
+        with tempfile.TemporaryDirectory() as directory:
+            response = FOREXWorkflow(SOCService(SOCConfig(base_dir=directory))).security_posture("UNKNOWN")
+        posture = response.data["posture"]
+        self.assertFalse(posture["observed"])
+        self.assertEqual(posture["risk"]["score"], 0)
+        self.assertEqual(posture["scope"], "terminal")
+        json.dumps(response.to_dict())
 
     def test_examples_import_only_the_public_soc_package(self):
         for relative in ("examples/forex_adapter.py", "examples/forex_workflow.py"):

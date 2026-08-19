@@ -45,3 +45,17 @@ a terminal ID. It returns only a versioned posture state, explainable risk,
 urgent-alert and open-incident counts, top reasons, a descriptive next step,
 generation time, and bounded alert/incident references. It does not return the
 full event stream and does not execute response actions.
+# FOREX integration
+
+```python
+from soc import FOREXWorkflow, SOCConfig, SOCService
+
+service = SOCService(SOCConfig.from_env())
+forex = FOREXWorkflow(service)
+global_posture = forex.security_posture()
+terminal_posture = forex.security_posture("FOREX-01")
+```
+
+Use `ingest_and_assess()` for idempotent producer ingestion and assessment.
+FOREX never needs paths, JSONL readers, indices, alert services, incident
+services, or UI modules.

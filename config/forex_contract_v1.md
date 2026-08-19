@@ -114,3 +114,16 @@ security facade. It composes only public `SOCService` methods and returns
 summary, urgent-alert and open-incident counts, top reasons, a descriptive next
 step, generation time, and bounded references. The response remains
 `SOCResponseV1` and intentionally excludes the full event stream.
+# FOREX workflow contract v1
+
+The supported in-process boundary is `FOREXWorkflow(SOCService(...))`. FOREX
+does not open SOC JSONL or import internal packages. All operations return
+`SOCResponseV1` version 1.0.
+
+`security_posture(terminal_id=None)` returns a compact `posture` containing
+`scope`, `observed`, `state`, `attention_required`, `risk`, `urgent_alerts`,
+`open_incidents`, `references`, `top_reasons`, `recommended_next_step`, and
+`generated_at`. Unknown terminals return `observed=false`, zero risk and a
+valid posture. Unknown additive fields must be ignored.
+
+Posture is read-only and cannot authorize response.
