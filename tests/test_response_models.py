@@ -3,7 +3,7 @@ import unittest
 from dataclasses import FrozenInstanceError
 
 from soc.models import (
-    CorrelationV1, DetectionV1, EventQueryV1, HostProfileV1,
+    CorrelationV1, DetectionV1, EventQueryV1, HostDetailV1, HostProfileV1,
     InvestigationV1, SOCResponseV1,
 )
 
@@ -37,6 +37,11 @@ class ResponseModelContractTests(unittest.TestCase):
         query = EventQueryV1(hostname="HOST", limit=5)
         with self.assertRaises(FrozenInstanceError):
             query.limit = 2
+
+    def test_host_detail_is_an_additive_serializable_model(self):
+        detail = HostDetailV1(hostname="FOREX", events_by_source={"forex": 2})
+        self.assertEqual(detail.hostname, "FOREX")
+        json.dumps(SOCResponseV1(data={"host": detail}).to_dict())
 
 
 if __name__ == "__main__":

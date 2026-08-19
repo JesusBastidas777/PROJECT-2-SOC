@@ -4,7 +4,7 @@ from soc.config import SOCConfig
 from soc.factory import build_components
 from soc.models import (
     CorrelationV1, DetectionV1, EventQueryV1, HostProfileV1,
-    HostRecordV1, InvestigationV1, OperationalSummaryV1, SOCResponseV1,
+    HostDetailV1, HostRecordV1, InvestigationV1, OperationalSummaryV1, SOCResponseV1,
 )
 
 
@@ -110,6 +110,13 @@ class SOCService:
         return SOCResponseV1(
             data={"host": HostRecordV1.from_mapping(item) if item else None},
             metadata={"found": item is not None},
+        )
+
+    def get_host_detail(self, hostname, recent_limit=10):
+        item = self._components.host_details.build(hostname, recent_limit=recent_limit)
+        return SOCResponseV1(
+            data={"host": HostDetailV1.from_mapping(item) if item else None},
+            metadata={"found": item is not None, "hostname": hostname},
         )
 
     def operational_summary(self, **filters):

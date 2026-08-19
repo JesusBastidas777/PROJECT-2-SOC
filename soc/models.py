@@ -147,6 +147,26 @@ class HostRecordV1:
 
 
 @dataclass(frozen=True)
+class HostDetailV1:
+    hostname: str
+    observed_names: List[str] = field(default_factory=list)
+    first_seen: Optional[str] = None
+    last_seen: Optional[str] = None
+    total_events: int = 0
+    events_by_severity: Dict[str, int] = field(default_factory=dict)
+    events_by_source: Dict[str, int] = field(default_factory=dict)
+    events_by_type: Dict[str, int] = field(default_factory=dict)
+    frequent_processes: List[Dict[str, Any]] = field(default_factory=list)
+    frequent_users: List[Dict[str, Any]] = field(default_factory=list)
+    open_alerts_by_priority: Dict[str, int] = field(default_factory=dict)
+    recent_activity: List[Dict[str, Any]] = field(default_factory=list)
+
+    @classmethod
+    def from_mapping(cls, value):
+        return cls(**{name: value[name] for name in cls.__dataclass_fields__ if name in value})
+
+
+@dataclass(frozen=True)
 class OperationalSummaryV1:
     window: Dict[str, Optional[str]]
     hostname: Optional[str]

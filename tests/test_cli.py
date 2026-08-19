@@ -90,6 +90,17 @@ class CLITests(unittest.TestCase):
         self.assertEqual(second.returncode, 0, second.stderr)
         self.assertFalse(json.loads(second.stdout)["metadata"]["has_more"])
 
+    def test_hosts_detail_is_available_without_changing_basic_lookup(self):
+        self.run_cli("ingest", json.dumps({
+            "event_uid": "forex:detail", "host": "FOREX", "event_type": "quote",
+            "source": "forex", "severity": "low", "timestamp": "2026-08-18T00:00:00Z",
+        }))
+        basic = json.loads(self.run_cli("hosts", "FOREX").stdout)
+        detailed = self.run_cli("hosts", "forex", "--detail", "--recent-limit", "1")
+        self.assertEqual(detailed.returncode, 0, detailed.stderr)
+        self.assertEqual(basic["data"]["host"]["total_events"], 1)
+        self.assertEqual(json.loads(detailed.stdout)["data"]["host"]["total_events"], 1)
+
 
 if __name__ == "__main__":
     unittest.main()

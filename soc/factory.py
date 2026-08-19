@@ -4,6 +4,7 @@ from dataclasses import dataclass
 
 from alerting.alert_service import AlertService
 from investigation.event_search import EventSearch
+from investigation.host_detail import HostDetail
 from inventory.host_catalog import HostCatalog
 from investigation.investigation_service import InvestigationService
 from normalization.event_normalizer import EventNormalizer
@@ -30,6 +31,7 @@ class SOCComponents:
     reporting: OperationalSummary
     transfer: DataTransfer
     integrity: IntegrityService
+    host_details: HostDetail
 
 
 def build_components(config=None):
@@ -40,6 +42,7 @@ def build_components(config=None):
     investigation = InvestigationService(reader)
     store = EventStore(config.events_path, lock_timeout=config.lock_timeout)
     normalizer = EventNormalizer()
+    inventory = HostCatalog(reader, alerts)
     return SOCComponents(
         config=config,
         reader=reader,
@@ -49,10 +52,11 @@ def build_components(config=None):
         investigation=investigation,
         alerts=alerts,
         status=status,
-        inventory=HostCatalog(reader, alerts),
+        inventory=inventory,
         reporting=OperationalSummary(
             reader, alerts, investigation.detection_engine, status
         ),
         transfer=DataTransfer(reader, store, normalizer, config.lock_timeout),
         integrity=IntegrityService(config.events_path, config.lock_timeout),
+        host_details=HostDetail(reader, alerts, inventory),
     )

@@ -18,6 +18,11 @@ The stable methods are `ingest_event`, `search_events`, `get_event`, `investigat
 `operational_summary`, `export_events`, `import_events`, `audit_storage`,
 `repair_storage`, `metrics`, and `status`.
 
+`get_host_detail(hostname, recent_limit=10)` is an additive detailed view with
+consolidated names, activity bounds, event dimensions, frequent processes and
+users, open alerts by priority, and recent activity. Host lookup ignores case
+and surrounding whitespace; `get_host` remains unchanged.
+
 Event searches accept `event_uid` for direct indexed lookup and `sort_order`
 (`newest` by default or `oldest`). Results are ordered deterministically by
 timestamp, event UID, and stable stored position. Legacy records without valid

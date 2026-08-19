@@ -51,6 +51,8 @@ def build_parser():
     commands.add_parser("status", help="show health and runtime metrics")
     hosts = commands.add_parser("hosts", help="list or inspect observed hosts")
     hosts.add_argument("hostname", nargs="?")
+    hosts.add_argument("--detail", action="store_true")
+    hosts.add_argument("--recent-limit", type=int, default=10)
     summary = commands.add_parser("summary", help="show an operational summary")
     summary.add_argument("--host", dest="hostname")
     summary.add_argument("--start", dest="start_timestamp")
@@ -109,6 +111,10 @@ def _invoke(service, args):
         }
         return service.search_alerts(**filters)
     if args.command == "hosts":
+        if args.detail:
+            if not args.hostname:
+                raise ValueError("--detail requires a hostname")
+            return service.get_host_detail(args.hostname, recent_limit=args.recent_limit)
         return service.get_host(args.hostname) if args.hostname else service.list_hosts()
     if args.command == "summary":
         filters = {
