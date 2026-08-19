@@ -11,7 +11,8 @@ from soc.ui.state import UIState
 
 class SOCApplication:
     def __init__(self, service, *, view="overview", refresh_seconds=15, max_rows=20,
-                 selected_alert=None, priority=None, hostname=None, alert_status="open"):
+                 selected_alert=None, priority=None, hostname=None, alert_status="open",
+                 selected_incident=None):
         self.service = service
         self.workflow = FOREXWorkflow(service)
         self.view = normalize_view(view)
@@ -21,6 +22,7 @@ class SOCApplication:
         self.max_rows = max(1, min(int(max_rows), 100))
         self.selected_alert, self.priority, self.hostname = selected_alert, priority, hostname
         self.alert_status = alert_status
+        self.selected_incident = selected_incident
 
     def collect(self):
         updated = datetime.now(timezone.utc).isoformat()
@@ -54,12 +56,30 @@ class SOCApplication:
             value = {"hosts": hosts, "risks": risks, "detail": detail,
                      "selected_risk": risk, "investigation": investigation}
             return UIState(view=self.view, payload=render_hosts(value, self.max_rows), updated_at=updated)
+        if self.view == "incidents":
+            from soc.ui.screens.incidents import render_incidents
+            incidents = self.service.list_incidents(hostname=self.hostname).data["incidents"]
+            ids = [item.incident_id for item in incidents]
+            selected_id = self.selected_incident if self.selected_incident in ids else (ids[0] if ids else None)
+            self.selected_incident = selected_id
+            selected = self.service.get_incident(selected_id).data["incident"] if selected_id else None
+            alerts = [self.service.get_alert(alert_id).data["alert"] for alert_id in (selected.alert_ids if selected else [])]
+            timeline = self.service.get_incident_timeline(selected_id, limit=self.max_rows).data["timeline"] if selected else None
+            guidance = self.service.recommend_response(incident_id=selected_id).data["guidance"] if selected else None
+            value = {"incidents": incidents, "selected": selected, "alerts": alerts,
+                     "timeline": timeline, "guidance": guidance}
+            return UIState(view=self.view, payload=render_incidents(value, self.max_rows), updated_at=updated)
         return UIState(view=self.view, updated_at=updated)
 
     def transition_selected_alert(self, status):
         if not self.selected_alert:
             raise ValueError("no alert is selected")
         return self.service.transition_alert(self.selected_alert, status)
+
+    def transition_selected_incident(self, status):
+        if not self.selected_incident:
+            raise ValueError("no incident is selected")
+        return self.service.transition_incident(self.selected_incident, status)
 
     def render(self, state):
         return build_shell(state, max_rows=self.max_rows)
@@ -80,9 +100,11 @@ class SOCApplication:
 
 def run_ui(service, **options):
     try:
-        app = SOCApplication(service, **{k: v for k, v in options.items() if k not in {"once", "console", "alert_action"}})
+        app = SOCApplication(service, **{k: v for k, v in options.items() if k not in {"once", "console", "alert_action", "incident_action"}})
         if options.get("alert_action"):
             app.transition_selected_alert(options["alert_action"])
+        if options.get("incident_action"):
+            app.transition_selected_incident(options["incident_action"])
         return app.run(
             once=options.get("once", False), console=options.get("console")
         )

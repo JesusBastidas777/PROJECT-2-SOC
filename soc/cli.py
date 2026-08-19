@@ -157,6 +157,8 @@ def build_parser():
     ui.add_argument("--status", choices=("open", "acknowledged", "closed"), default="open", dest="alert_status")
     ui.add_argument("--select-alert", dest="selected_alert")
     ui.add_argument("--alert-action", choices=("acknowledged", "closed"))
+    ui.add_argument("--select-incident", dest="selected_incident")
+    ui.add_argument("--incident-action", choices=("investigating", "contained", "closed"))
     return parser
 
 
@@ -316,7 +318,8 @@ def main(argv=None):
                           refresh_seconds=args.refresh_seconds, max_rows=args.max_rows,
                           priority=args.priority, hostname=args.hostname,
                           alert_status=args.alert_status, selected_alert=args.selected_alert,
-                          alert_action=args.alert_action)
+                          alert_action=args.alert_action, selected_incident=args.selected_incident,
+                          incident_action=args.incident_action)
         response = _invoke(SOCService(config), args)
         payload = response.to_dict()
         if args.human:
