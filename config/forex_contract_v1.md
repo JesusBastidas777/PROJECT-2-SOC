@@ -15,7 +15,7 @@ payload = result.to_dict()
 
 The stable methods are `ingest_event`, `search_events`, `investigate_host`, `analyze_host`,
 `create_alerts`, `search_alerts`, `transition_alert`, `list_hosts`, `get_host`, `health`,
-`metrics`, and `status`.
+`operational_summary`, `metrics`, and `status`.
 Every method returns `SOCResponseV1`. Its JSON shape is:
 
 ```json
@@ -44,3 +44,8 @@ Alerts expose operational `priority` (`P1`-`P4`), `event_uid`, and explicit
 `created_at`, `updated_at`, `acknowledged_at`, and `closed_at` lifecycle fields.
 The legacy `timestamp` field remains available. Alert queries may filter by
 priority and are ordered by priority then creation time.
+
+`operational_summary` returns a typed, deterministic aggregation for an
+optional UTC interval and host. It includes event dimensions, active hosts,
+alert priority/state, top detections, data-quality counters, and an
+`attention_required` indicator.

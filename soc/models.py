@@ -144,6 +144,29 @@ class HostRecordV1:
 
 
 @dataclass(frozen=True)
+class OperationalSummaryV1:
+    window: Dict[str, Optional[str]]
+    hostname: Optional[str]
+    total_events: int
+    events_by_severity: Dict[str, int] = field(default_factory=dict)
+    events_by_source: Dict[str, int] = field(default_factory=dict)
+    events_by_type: Dict[str, int] = field(default_factory=dict)
+    active_hosts: int = 0
+    top_hosts: List[Dict[str, Any]] = field(default_factory=list)
+    alerts_by_priority: Dict[str, int] = field(default_factory=dict)
+    alerts_by_status: Dict[str, int] = field(default_factory=dict)
+    top_detections: List[Dict[str, Any]] = field(default_factory=list)
+    duplicates_rejected: int = 0
+    invalid_records: int = 0
+    last_event: Optional[str] = None
+    attention_required: bool = False
+
+    @classmethod
+    def from_mapping(cls, value):
+        return cls(**{name: value[name] for name in cls.__dataclass_fields__ if name in value})
+
+
+@dataclass(frozen=True)
 class InvestigationV1:
     host_profile: HostProfileV1
     timeline: List[Dict[str, Any]] = field(default_factory=list)

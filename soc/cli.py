@@ -48,6 +48,11 @@ def build_parser():
     commands.add_parser("status", help="show health and runtime metrics")
     hosts = commands.add_parser("hosts", help="list or inspect observed hosts")
     hosts.add_argument("hostname", nargs="?")
+    summary = commands.add_parser("summary", help="show an operational summary")
+    summary.add_argument("--host", dest="hostname")
+    summary.add_argument("--start", dest="start_timestamp")
+    summary.add_argument("--end", dest="end_timestamp")
+    summary.add_argument("--limit", type=int)
     return parser
 
 
@@ -89,6 +94,13 @@ def _invoke(service, args):
         return service.search_alerts(**filters)
     if args.command == "hosts":
         return service.get_host(args.hostname) if args.hostname else service.list_hosts()
+    if args.command == "summary":
+        filters = {
+            name: getattr(args, name)
+            for name in ("hostname", "start_timestamp", "end_timestamp", "limit")
+            if getattr(args, name) is not None
+        }
+        return service.operational_summary(**filters)
     return service.status()
 
 

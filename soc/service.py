@@ -4,7 +4,7 @@ from soc.config import SOCConfig
 from soc.factory import build_components
 from soc.models import (
     CorrelationV1, DetectionV1, EventQueryV1, HostProfileV1,
-    HostRecordV1, InvestigationV1, SOCResponseV1,
+    HostRecordV1, InvestigationV1, OperationalSummaryV1, SOCResponseV1,
 )
 
 
@@ -96,6 +96,11 @@ class SOCService:
             data={"host": HostRecordV1.from_mapping(item) if item else None},
             metadata={"found": item is not None},
         )
+
+    def operational_summary(self, **filters):
+        with self._components.status.measure("operational_summary"):
+            summary = self._components.reporting.build(**filters)
+        return SOCResponseV1(data={"summary": OperationalSummaryV1.from_mapping(summary)})
 
     def health(self):
         health = self._components.status.health()
