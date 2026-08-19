@@ -18,10 +18,14 @@ class SOCService:
     def ingest_event(self, event):
         with self._components.status.measure("ingest_event"):
             normalized = self._components.normalizer.normalize(event)
-            self._components.store.store(normalized)
-            self._components.status.record_ingestion()
+            stored_event, stored = self._components.store.store_once(normalized)
+            if stored:
+                self._components.status.record_ingestion()
+            else:
+                self._components.status.record_duplicate()
         return SOCResponseV1(
-            data={"event": normalized}, metadata={"stored": True}
+            data={"event": stored_event},
+            metadata={"stored": stored, "duplicate": not stored},
         )
 
     def search_events(self, query=None, **filters):

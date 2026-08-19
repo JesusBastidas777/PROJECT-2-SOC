@@ -52,6 +52,16 @@ class CLITests(unittest.TestCase):
         self.assertEqual(result.stdout, "")
         self.assertEqual(json.loads(result.stderr)["code"], "invalid_request")
 
+    def test_repeated_ingestion_reports_duplicate(self):
+        event = json.dumps({
+            "hostname": "FOREX", "event_type": "quote", "source": "forex",
+            "severity": "low", "timestamp": "2026-08-18T00:00:00Z",
+        })
+        first = json.loads(self.run_cli("ingest", event).stdout)
+        second = json.loads(self.run_cli("ingest", event).stdout)
+        self.assertTrue(first["metadata"]["stored"])
+        self.assertTrue(second["metadata"]["duplicate"])
+
 
 if __name__ == "__main__":
     unittest.main()

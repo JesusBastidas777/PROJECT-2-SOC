@@ -71,6 +71,19 @@ class EventPersistenceTests(unittest.TestCase):
             EventStore(path, lock_timeout=0).store({"host": "stored"})
             self.assertEqual(EventReader(path).read_events()[0]["host"], "stored")
 
+    def test_store_once_is_idempotent_but_legacy_store_remains_append_only(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "events.jsonl"
+            store = EventStore(path)
+            first, inserted = store.store_once({"host": "A", "event_uid": "evt-1"})
+            existing, repeated = store.store_once({"host": "A", "event_uid": "evt-1"})
+            store.store_once({"host": "LEGACY"})
+            store.store_once({"host": "LEGACY"})
+            self.assertTrue(inserted)
+            self.assertFalse(repeated)
+            self.assertEqual(existing, first)
+            self.assertEqual(len(EventReader(path).read_events()), 3)
+
 
 if __name__ == "__main__":
     unittest.main()

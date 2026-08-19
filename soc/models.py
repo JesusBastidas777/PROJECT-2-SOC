@@ -105,6 +105,7 @@ class MetricsV1:
     open_alerts: int
     last_ingestion: Optional[str]
     operation_durations_ms: Dict[str, float] = field(default_factory=dict)
+    duplicates_rejected: int = 0
 
 
 @dataclass(frozen=True)

@@ -30,3 +30,7 @@ New events include a stable `event_uid`, `ingested_at`,
 `event_schema_version`, and a minimal `provenance` mapping. These fields are
 additive: `event_id` retains its producer-specific meaning and legacy stored
 events without identity metadata remain readable.
+
+`ingest_event` is idempotent for identified events. Its response metadata
+contains `stored` and `duplicate`; a retry returns the previously stored event
+without appending another JSONL record.

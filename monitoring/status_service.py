@@ -14,6 +14,7 @@ class StatusService:
         self.alert_service = alert_service
         self.last_ingestion = None
         self.operation_durations_ms = {}
+        self.duplicates_rejected = 0
 
     @contextmanager
     def measure(self, operation):
@@ -28,6 +29,9 @@ class StatusService:
     def record_ingestion(self):
         self.last_ingestion = datetime.now(timezone.utc).isoformat()
 
+    def record_duplicate(self):
+        self.duplicates_rejected += 1
+
     def metrics(self):
         events = self.event_reader.read_events()
         invalid = self.event_reader.invalid_line_count
@@ -38,6 +42,7 @@ class StatusService:
             open_alerts=open_alerts,
             last_ingestion=self.last_ingestion,
             operation_durations_ms=dict(self.operation_durations_ms),
+            duplicates_rejected=self.duplicates_rejected,
         )
 
     def health(self):

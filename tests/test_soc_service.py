@@ -41,6 +41,19 @@ class SOCServiceFlowTests(unittest.TestCase):
         other = SOCService(SOCConfig(base_dir=self.directory.name))
         self.assertIsNot(self.service._components.reader, other._components.reader)
 
+    def test_ingestion_retry_is_idempotent_and_reported(self):
+        event = {
+            "hostname": "FOREX", "event_type": "quote", "source": "forex",
+            "severity": "low", "timestamp": "2026-08-18T10:00:00Z",
+        }
+        first = self.service.ingest_event(event)
+        second = self.service.ingest_event(event)
+        self.assertEqual(first.data["event"]["event_uid"], second.data["event"]["event_uid"])
+        self.assertEqual(first.metadata, {"stored": True, "duplicate": False})
+        self.assertEqual(second.metadata, {"stored": False, "duplicate": True})
+        self.assertEqual(self.service.search_events(hostname="FOREX").metadata["count"], 1)
+        self.assertEqual(self.service.metrics().data["metrics"].duplicates_rejected, 1)
+
 
 if __name__ == "__main__":
     unittest.main()

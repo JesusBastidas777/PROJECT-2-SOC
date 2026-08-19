@@ -29,20 +29,46 @@ class EventStore:
         except OSError as exc:
             raise StorageWriteError(f"cannot initialize event log: {self.log_file}") from exc
 
-    def store(self,event):
+    def _append_unlocked(self, payload):
+        with self.log_file.open("a", encoding="utf-8", newline="\n") as file:
+            file.write(payload + "\n")
+            file.flush()
+            os.fsync(file.fileno())
 
+    def store(self,event):
         try:
             payload = json.dumps(event, ensure_ascii=False)
             with exclusive_file_lock(self.log_file, self.lock_timeout):
-                with self.log_file.open("a", encoding="utf-8", newline="\n") as file:
-                    file.write(payload + "\n")
-                    file.flush()
-                    os.fsync(file.fileno())
+                self._append_unlocked(payload)
         except (OSError, TypeError, ValueError) as exc:
             raise StorageWriteError(f"cannot store event in: {self.log_file}") from exc
         self.events.append(event)
         logger.info("event stored", extra={"event_host": event.get("host")})
         return event
+
+    def store_once(self, event):
+        """Atomically append an identified event unless its UID already exists."""
+        event_uid = event.get("event_uid")
+        if not event_uid:
+            self.store(event)
+            return event, True
+        try:
+            payload = json.dumps(event, ensure_ascii=False)
+            with exclusive_file_lock(self.log_file, self.lock_timeout):
+                with self.log_file.open("r", encoding="utf-8") as file:
+                    for line in file:
+                        try:
+                            existing = json.loads(line)
+                        except (json.JSONDecodeError, UnicodeDecodeError):
+                            continue
+                        if isinstance(existing, dict) and existing.get("event_uid") == event_uid:
+                            return existing, False
+                self._append_unlocked(payload)
+        except (OSError, TypeError, ValueError) as exc:
+            raise StorageWriteError(f"cannot store event in: {self.log_file}") from exc
+        self.events.append(event)
+        logger.info("event stored", extra={"event_host": event.get("host")})
+        return event, True
 
     def count(self):
 
