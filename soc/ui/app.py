@@ -12,9 +12,9 @@ from soc.ui.state import UIState
 class SOCApplication:
     def __init__(self, service, *, view="overview", refresh_seconds=15, max_rows=20,
                  selected_alert=None, priority=None, hostname=None, alert_status="open",
-                 selected_incident=None):
+                 selected_incident=None, workflow=None):
         self.service = service
-        self.workflow = FOREXWorkflow(service)
+        self.workflow = workflow or FOREXWorkflow(service)
         self.view = normalize_view(view)
         if refresh_seconds <= 0:
             raise ValueError("refresh_seconds must be positive")
@@ -69,6 +69,14 @@ class SOCApplication:
             value = {"incidents": incidents, "selected": selected, "alerts": alerts,
                      "timeline": timeline, "guidance": guidance}
             return UIState(view=self.view, payload=render_incidents(value, self.max_rows), updated_at=updated)
+        if self.view == "forex":
+            from soc.ui.screens.forex import render_forex
+            terminals = self.workflow.list_terminals().data["terminals"]
+            response = self.workflow.security_posture(self.hostname)
+            posture = response.data["posture"]
+            return UIState(view=self.view, payload=render_forex({"terminals": terminals, "posture": posture}, self.max_rows),
+                           status=response.status, updated_at=posture.get("generated_at") or updated,
+                           metadata={"references": posture.get("references") or {}})
         return UIState(view=self.view, updated_at=updated)
 
     def transition_selected_alert(self, status):

@@ -146,6 +146,12 @@ class FOREXWorkflow:
             }
         }, metadata={"terminal_id": terminal_id, "scope": "terminal" if terminal_id else "global"})
 
+    def list_terminals(self):
+        """Return observed terminal identities through the public SOC facade."""
+        hosts = self.service.list_hosts().data["hosts"]
+        return SOCResponseV1(data={"terminals": [host.hostname for host in hosts]},
+                             metadata={"count": len(hosts)})
+
     def export_terminal_report(self, terminal_id, destination, *, recent_limit=10,
                                overwrite=False, generated_at=None):
         context = self.get_terminal_context(terminal_id, recent_limit=recent_limit)
