@@ -90,12 +90,25 @@ class AlertV1:
     rule_name: str
     reason: str
     event: Dict[str, Any] = field(default_factory=dict)
+    priority: str = "P4"
+    event_uid: Optional[str] = None
+    created_at: Optional[str] = None
+    updated_at: Optional[str] = None
+    acknowledged_at: Optional[str] = None
+    closed_at: Optional[str] = None
 
     @classmethod
     def from_mapping(cls, value):
-        return cls(**{
+        values = {
             name: value[name] for name in cls.__dataclass_fields__ if name in value
-        })
+        }
+        values.setdefault("created_at", value.get("timestamp"))
+        values.setdefault("updated_at", value.get("timestamp"))
+        values.setdefault("event_uid", (value.get("event") or {}).get("event_uid"))
+        values.setdefault("priority", {
+            "critical": "P1", "high": "P2", "medium": "P3",
+        }.get(str(value.get("severity") or "").lower(), "P4"))
+        return cls(**values)
 
 
 @dataclass(frozen=True)

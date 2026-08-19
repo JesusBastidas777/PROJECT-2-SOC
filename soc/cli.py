@@ -39,6 +39,7 @@ def build_parser():
     alerts = commands.add_parser("alerts", help="query or manage alerts")
     alerts.add_argument("--host", dest="hostname")
     alerts.add_argument("--severity")
+    alerts.add_argument("--priority", choices=("P1", "P2", "P3", "P4"))
     alerts.add_argument("--status", choices=("open", "acknowledged", "closed"))
     alerts.add_argument("--promote-host")
     alerts.add_argument("--alert-id")
@@ -82,7 +83,7 @@ def _invoke(service, args):
                 raise ValueError("--alert-id and --set-status must be used together")
             return service.transition_alert(args.alert_id, args.set_status)
         filters = {
-            name: getattr(args, name) for name in ("hostname", "severity", "status")
+            name: getattr(args, name) for name in ("hostname", "severity", "status", "priority")
             if getattr(args, name) is not None
         }
         return service.search_alerts(**filters)

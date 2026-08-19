@@ -39,3 +39,8 @@ without appending another JSONL record.
 `list_hosts` and `get_host` expose a derived inventory. Host lookup ignores
 leading/trailing whitespace and letter case, while stored events retain their
 observed host value.
+
+Alerts expose operational `priority` (`P1`-`P4`), `event_uid`, and explicit
+`created_at`, `updated_at`, `acknowledged_at`, and `closed_at` lifecycle fields.
+The legacy `timestamp` field remains available. Alert queries may filter by
+priority and are ordered by priority then creation time.

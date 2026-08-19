@@ -11,6 +11,8 @@ from storage.event_store import EventStore
 
 
 VALID_STATUSES = {"open", "acknowledged", "closed"}
+VALID_PRIORITIES = {"P1", "P2", "P3", "P4"}
+SEVERITY_PRIORITIES = {"critical": "P1", "high": "P2", "medium": "P3", "low": "P4"}
 TRANSITIONS = {
     "open": {"acknowledged", "closed"},
     "acknowledged": {"closed"},
@@ -50,15 +52,25 @@ class AlertService:
         if existing:
             return AlertV1.from_mapping(existing)
         event = dict(detection.get("event") or {})
+        now = datetime.now(timezone.utc).isoformat()
+        priority = detection.get("priority") or SEVERITY_PRIORITIES.get(
+            str(detection.get("severity") or "").lower(), "P4"
+        )
+        if priority not in VALID_PRIORITIES:
+            raise QueryError(f"invalid alert priority: {priority}")
         alert = AlertV1(
             alert_id=alert_id,
-            timestamp=datetime.now(timezone.utc).isoformat(),
+            timestamp=now,
             status="open",
             hostname=event.get("host") or event.get("hostname") or "unknown",
             severity=str(detection.get("severity") or "unknown").lower(),
             rule_name=detection.get("rule_name") or "unknown",
             reason=detection.get("reason") or "",
             event=event,
+            priority=priority,
+            event_uid=event.get("event_uid"),
+            created_at=now,
+            updated_at=now,
         )
         self.store.store(alert.__dict__)
         return alert
@@ -80,17 +92,28 @@ class AlertService:
             )
         updated = dict(current)
         updated["status"] = status
-        updated["timestamp"] = datetime.now(timezone.utc).isoformat()
+        now = datetime.now(timezone.utc).isoformat()
+        updated["timestamp"] = now
+        updated["updated_at"] = now
+        updated.setdefault("created_at", current.get("timestamp"))
+        if status == "acknowledged":
+            updated["acknowledged_at"] = now
+        if status == "closed":
+            updated["closed_at"] = now
         self.store.store(updated)
         return AlertV1.from_mapping(updated)
 
-    def search(self, *, hostname=None, severity=None, status=None):
+    def search(self, *, hostname=None, severity=None, status=None, priority=None):
         if status is not None and status not in VALID_STATUSES:
             raise QueryError(f"invalid alert status filter: {status}")
-        alerts = self._latest().values()
-        return [
-            AlertV1.from_mapping(item) for item in alerts
+        if priority is not None and priority not in VALID_PRIORITIES:
+            raise QueryError(f"invalid alert priority filter: {priority}")
+        current = self._latest().values()
+        alerts = [
+            AlertV1.from_mapping(item) for item in current
             if (hostname is None or item.get("hostname") == hostname)
             and (severity is None or item.get("severity") == severity)
             and (status is None or item.get("status") == status)
+            and (priority is None or AlertV1.from_mapping(item).priority == priority)
         ]
+        return sorted(alerts, key=lambda item: (item.priority, item.created_at or item.timestamp))
