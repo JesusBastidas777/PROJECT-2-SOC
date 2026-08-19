@@ -147,6 +147,11 @@ def build_parser():
     forex_report.add_argument("destination", type=Path)
     forex_report.add_argument("--recent-limit", type=int, default=10)
     forex_report.add_argument("--overwrite", action="store_true")
+    ui = commands.add_parser("ui", help="run the local Rich operations interface")
+    ui.add_argument("--view", choices=("overview", "alerts", "hosts", "incidents", "forex"), default="overview")
+    ui.add_argument("--once", action="store_true")
+    ui.add_argument("--refresh", type=float, default=15.0, dest="refresh_seconds")
+    ui.add_argument("--max-rows", type=int, default=20)
     return parser
 
 
@@ -300,6 +305,10 @@ def main(argv=None):
         overrides["base_dir"] = args.events_path.parent
     config = SOCConfig.from_env(**overrides)
     try:
+        if args.command == "ui":
+            from soc.ui.app import run_ui
+            return run_ui(SOCService(config), view=args.view, once=args.once,
+                          refresh_seconds=args.refresh_seconds, max_rows=args.max_rows)
         response = _invoke(SOCService(config), args)
         payload = response.to_dict()
         if args.human:

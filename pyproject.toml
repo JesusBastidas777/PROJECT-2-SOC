@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "forex-soc"
+version = "1.0.0rc1"
+description = "Local security operations console for FOREX"
+requires-python = ">=3.11,<3.15"
+dependencies = ["rich==15.0.0"]
+
+[project.scripts]
+soc = "soc.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["soc*"]
