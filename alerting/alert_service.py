@@ -41,6 +41,10 @@ class AlertService:
     def _latest(self):
         return {item["alert_id"]: item for item in self.reader.read_events() if item.get("alert_id")}
 
+    def get(self, alert_id):
+        item = self._latest().get(alert_id)
+        return AlertV1.from_mapping(item) if item else None
+
     def create_alert(self, detection):
         if isinstance(detection, DetectionV1):
             detection = {

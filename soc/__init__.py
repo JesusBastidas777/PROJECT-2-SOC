@@ -1,10 +1,11 @@
 """Stable composition layer for the SOC application."""
 
 from soc.config import SOCConfig
-from soc.models import SOCResponseV1
+from soc.models import EventQueryV1, SOCResponseV1
 
 __all__ = [
-    "FOREXAdapter", "FOREXWorkflow", "SOCConfig", "SOCComponents", "SOCResponseV1", "SOCService",
+    "EventQueryV1", "FOREXAdapter", "FOREXWorkflow", "SOCConfig", "SOCComponents",
+    "SOCResponseV1", "SOCService",
     "build_components"
 ]
 

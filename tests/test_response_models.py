@@ -18,6 +18,11 @@ class ResponseModelContractTests(unittest.TestCase):
         self.assertEqual(payload["schema_version"], "1.0")
         json.dumps(payload)
 
+    def test_v1_envelope_accepts_legacy_optional_values(self):
+        payload = SOCResponseV1(data={"timestamp": None, "evidence": {}}).to_dict()
+        self.assertEqual(payload["schema_version"], "1.0")
+        json.dumps(payload)
+
     def test_investigation_converts_internal_mappings_to_typed_models(self):
         profile = HostProfileV1.from_mapping({"hostname": "HOST", "total_events": 1})
         correlation = CorrelationV1.from_mapping({

@@ -15,6 +15,7 @@ from normalization.event_normalizer import EventNormalizer
 from monitoring.status_service import StatusService
 from reporting.operational_summary import OperationalSummary
 from reporting.command_center import CommandCenter
+from reporting.report_exporter import ReportExporter
 from risk.host_risk import HostRiskService
 from response.guidance import ResponseGuidance
 from soc.config import SOCConfig
@@ -56,6 +57,7 @@ class SOCComponents:
     incident_timeline: IncidentTimeline
     guidance: ResponseGuidance
     command_center: CommandCenter
+    reporting_exporter: ReportExporter
 
 
 def build_components(config=None):
@@ -124,4 +126,5 @@ def build_components(config=None):
         incident_timeline=IncidentTimeline(incidents, alerts, reader),
         guidance=guidance,
         command_center=command_center,
+        reporting_exporter=ReportExporter(),
     )

@@ -98,6 +98,12 @@ class SOCService:
         alerts = self._components.alerts.search(**filters)
         return SOCResponseV1(data={"alerts": alerts}, metadata={"count": len(alerts)})
 
+    def get_alert(self, alert_id):
+        alert = self._components.alerts.get(alert_id)
+        return SOCResponseV1(
+            data={"alert": alert}, metadata={"found": alert is not None}
+        )
+
     def attention_queue(self, **filters):
         queue = self._components.attention.build(**filters)
         return SOCResponseV1(data={"queue": queue}, metadata={
@@ -190,6 +196,12 @@ class SOCService:
         return SOCResponseV1(data={"export": self._components.transfer.export_events(
             destination, **filters
         )})
+
+    def export_report(self, destination, report, *, overwrite=False):
+        exported = self._components.reporting_exporter.write(
+            destination, report, overwrite=overwrite
+        )
+        return SOCResponseV1(data={"report": report, "export": exported})
 
     def import_events(self, source, *, dry_run=False):
         return SOCResponseV1(data={"import": self._components.transfer.import_events(

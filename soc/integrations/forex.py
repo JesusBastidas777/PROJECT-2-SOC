@@ -4,7 +4,6 @@ import hashlib
 import re
 from datetime import datetime, timezone
 
-from reporting.report_exporter import ReportExporter
 from soc.models import SOCResponseV1
 
 
@@ -44,10 +43,9 @@ class FOREXWorkflow:
 
     REPORT_VERSION = "1.0"
 
-    def __init__(self, service, adapter=None, exporter=None):
+    def __init__(self, service, adapter=None):
         self.service = service
         self.adapter = adapter or FOREXAdapter()
-        self.exporter = exporter or ReportExporter()
 
     def ingest_and_assess(self, forex_event):
         ingestion = self.adapter.ingest(self.service, forex_event)
@@ -158,8 +156,7 @@ class FOREXWorkflow:
             "alerts": primitive["alerts"],
             "summary": primitive["summary"],
         }
-        exported = self.exporter.write(destination, report, overwrite=overwrite)
-        return SOCResponseV1(
-            data={"report": report, "export": exported},
-            metadata={"terminal_id": terminal_id, "found": context.metadata["found"]},
-        )
+        response = self.service.export_report(destination, report, overwrite=overwrite)
+        return SOCResponseV1(data=response.data, metadata={
+            "terminal_id": terminal_id, "found": context.metadata["found"]
+        })
