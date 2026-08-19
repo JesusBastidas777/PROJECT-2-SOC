@@ -18,6 +18,8 @@ from storage.integrity_service import IntegrityService
 from storage.retention_service import RetentionService
 from storage.compaction_service import AlertCompactionService
 from storage.backup_service import BackupService
+from maintenance.housekeeping_service import HousekeepingService
+from maintenance.operational_journal import OperationalJournal
 
 
 @dataclass
@@ -38,6 +40,8 @@ class SOCComponents:
     retention: RetentionService
     alert_compaction: AlertCompactionService
     backup: BackupService
+    journal: OperationalJournal
+    housekeeping: HousekeepingService
 
 
 def build_components(config=None):
@@ -49,6 +53,23 @@ def build_components(config=None):
     store = EventStore(config.events_path, lock_timeout=config.lock_timeout)
     normalizer = EventNormalizer()
     inventory = HostCatalog(reader, alerts)
+    integrity = IntegrityService(config.events_path, config.lock_timeout)
+    retention = RetentionService(
+        config.events_path, store.uid_index, config.retention_archive_dir,
+        config.lock_timeout,
+    )
+    alert_compaction = AlertCompactionService(
+        config.alerts_path, config.alert_archive_dir, config.lock_timeout
+    )
+    backup = BackupService(
+        config.events_path, config.alerts_path, store.uid_index,
+        config.backup_dir, config.lock_timeout,
+    )
+    journal = OperationalJournal(config.maintenance_journal_path, config.lock_timeout)
+    housekeeping = HousekeepingService(
+        integrity, backup, retention, alert_compaction,
+        journal, config.backup_dir,
+    )
     return SOCComponents(
         config=config,
         reader=reader,
@@ -63,17 +84,11 @@ def build_components(config=None):
             reader, alerts, investigation.detection_engine, status
         ),
         transfer=DataTransfer(reader, store, normalizer, config.lock_timeout),
-        integrity=IntegrityService(config.events_path, config.lock_timeout),
+        integrity=integrity,
         host_details=HostDetail(reader, alerts, inventory),
-        retention=RetentionService(
-            config.events_path, store.uid_index, config.retention_archive_dir,
-            config.lock_timeout,
-        ),
-        alert_compaction=AlertCompactionService(
-            config.alerts_path, config.alert_archive_dir, config.lock_timeout
-        ),
-        backup=BackupService(
-            config.events_path, config.alerts_path, store.uid_index,
-            config.backup_dir, config.lock_timeout,
-        ),
+        retention=retention,
+        alert_compaction=alert_compaction,
+        backup=backup,
+        journal=journal,
+        housekeeping=housekeeping,
     )

@@ -177,6 +177,21 @@ class SOCService:
             "restore": self._components.backup.restore(source, dry_run=dry_run)
         })
 
+    def housekeeping(self, *, plan_only=True, **options):
+        return SOCResponseV1(data={
+            "maintenance": self._components.housekeeping.run(
+                plan_only=plan_only, **options
+            )
+        })
+
+    def maintenance_history(self, limit=20):
+        if not isinstance(limit, int) or limit <= 0:
+            raise ValueError("limit must be a positive integer")
+        entries = self._components.journal.read(limit=limit)
+        return SOCResponseV1(
+            data={"maintenance": entries}, metadata={"count": len(entries)}
+        )
+
     def health(self):
         health = self._components.status.health()
         return SOCResponseV1(
@@ -192,5 +207,8 @@ class SOCService:
         metrics = self._components.status.metrics()
         return SOCResponseV1(
             status="success" if health.state == "healthy" else "degraded",
-            data={"health": health, "metrics": metrics},
+            data={
+                "health": health, "metrics": metrics,
+                "maintenance_last": self._components.journal.latest_completed(),
+            },
         )

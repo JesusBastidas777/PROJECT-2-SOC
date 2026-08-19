@@ -86,6 +86,18 @@ def build_parser():
     backup_restore = backup_commands.add_parser("restore")
     backup_restore.add_argument("path", type=Path)
     backup_restore.add_argument("--dry-run", action="store_true")
+    maintenance = commands.add_parser("maintenance", help="plan, run, or inspect housekeeping")
+    maintenance_commands = maintenance.add_subparsers(dest="maintenance_command", required=True)
+    for name in ("plan", "run"):
+        command = maintenance_commands.add_parser(name)
+        command.add_argument("--skip-audit", action="store_true")
+        command.add_argument("--skip-backup", action="store_true")
+        command.add_argument("--max-age-days", type=float)
+        command.add_argument("--max-bytes", type=int)
+        command.add_argument("--skip-alert-compaction", action="store_true")
+        command.add_argument("--skip-final-verification", action="store_true")
+    maintenance_history = maintenance_commands.add_parser("history")
+    maintenance_history.add_argument("--limit", type=int, default=20)
     return parser
 
 
@@ -160,16 +172,33 @@ def _invoke(service, args):
         if args.backup_command == "verify":
             return service.verify_backup(args.path)
         return service.restore_backup(args.path, dry_run=args.dry_run)
+    if args.command == "maintenance":
+        if args.maintenance_command == "history":
+            return service.maintenance_history(limit=args.limit)
+        options = {
+            "audit": not args.skip_audit,
+            "backup": not args.skip_backup,
+            "max_age_days": args.max_age_days,
+            "max_bytes": args.max_bytes,
+            "alert_compaction": not args.skip_alert_compaction,
+            "final_verification": not args.skip_final_verification,
+        }
+        return service.housekeeping(
+            plan_only=args.maintenance_command == "plan", **options
+        )
     return service.status()
 
 
 def main(argv=None):
     parser = build_parser()
     args = parser.parse_args(argv)
-    config = SOCConfig.from_env(
-        **{name: getattr(args, name) for name in ("events_path", "alerts_path")
-           if getattr(args, name) is not None}
-    )
+    overrides = {
+        name: getattr(args, name) for name in ("events_path", "alerts_path")
+        if getattr(args, name) is not None
+    }
+    if args.events_path is not None:
+        overrides["base_dir"] = args.events_path.parent
+    config = SOCConfig.from_env(**overrides)
     try:
         response = _invoke(SOCService(config), args)
         payload = response.to_dict()

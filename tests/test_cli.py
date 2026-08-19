@@ -128,6 +128,18 @@ class CLITests(unittest.TestCase):
         self.assertTrue(json.loads(verified.stdout)["data"]["backup"]["valid"])
         self.assertTrue(json.loads(restored.stdout)["data"]["restore"]["dry_run"])
 
+    def test_maintenance_plan_run_and_history(self):
+        plan = self.run_cli(
+            "maintenance", "plan", "--skip-backup", "--skip-alert-compaction"
+        )
+        run = self.run_cli(
+            "maintenance", "run", "--skip-backup", "--skip-alert-compaction"
+        )
+        history = self.run_cli("maintenance", "history", "--limit", "5")
+        self.assertTrue(json.loads(plan.stdout)["data"]["maintenance"]["plan_only"])
+        self.assertTrue(json.loads(run.stdout)["data"]["maintenance"]["success"])
+        self.assertGreaterEqual(json.loads(history.stdout)["metadata"]["count"], 2)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -52,6 +52,12 @@ events-and-alerts snapshot with relative paths, sizes, SHA-256 checksums, and a
 versioned logical signature. Restore supports dry-run, creates a pre-restore
 safety backup, replaces both stores under ordered locks, rolls back both on a
 partial failure, and rebuilds derived UID data.
+
+`housekeeping` coordinates audit, backup, optional retention, alert compaction,
+and final verification. Planning is read-only and real runs cannot overlap.
+`maintenance_history` exposes the append-only operational journal; `status`
+additively includes the latest completed maintenance entry. Scheduling remains
+the responsibility of cron, Task Scheduler, or the FOREX host application.
 Every method returns `SOCResponseV1`. Its JSON shape is:
 
 ```json
