@@ -91,3 +91,11 @@ class SOCService:
 
     def metrics(self):
         return SOCResponseV1(data={"metrics": self._components.status.metrics()})
+
+    def status(self):
+        health = self._components.status.health()
+        metrics = self._components.status.metrics()
+        return SOCResponseV1(
+            status="success" if health.state == "healthy" else "degraded",
+            data={"health": health, "metrics": metrics},
+        )
