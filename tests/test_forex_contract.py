@@ -19,6 +19,8 @@ class FOREXContractTests(unittest.TestCase):
             ).to_dict()
         self.assertEqual(payload["schema_version"], "1.0")
         self.assertEqual(payload["data"]["events"][0]["host"], "FOREX")
+        self.assertIn("event_uid", payload["data"]["events"][0])
+        self.assertEqual(payload["data"]["events"][0]["event_id"], None)
         json.dumps(payload)
 
 

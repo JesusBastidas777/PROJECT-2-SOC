@@ -1,17 +1,21 @@
 """Canonical SOC event contract and validation helpers."""
 
 from datetime import datetime, timezone
+import re
 
 from soc.errors import ValidationError
 
 
 REQUIRED_FIELDS = ("timestamp", "host", "event_type", "source", "severity")
 OPTIONAL_FIELDS = (
-    "event_id", "process_name", "pid", "parent_process", "user",
+    "event_id", "event_uid", "ingested_at", "event_schema_version", "provenance",
+    "process_name", "pid", "parent_process", "user",
     "src_ip", "dst_ip", "src_port", "dst_port", "protocol",
     "file_name", "file_path", "file_hash",
     "rule_name", "mitre_technique", "confidence",
 )
+EVENT_SCHEMA_VERSION = "1.0"
+EVENT_UID_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$")
 
 
 class EventValidationError(ValidationError):
@@ -41,4 +45,16 @@ def validate_event(event, *, allow_legacy=False):
         raise EventValidationError("missing required event fields: " + ", ".join(missing))
     if event.get("timestamp") is not None:
         utc_timestamp(event["timestamp"])
+    if event.get("ingested_at") is not None:
+        utc_timestamp(event["ingested_at"])
+    event_uid = event.get("event_uid")
+    if event_uid is not None and (
+        not isinstance(event_uid, str) or EVENT_UID_PATTERN.fullmatch(event_uid) is None
+    ):
+        raise EventValidationError(
+            "event_uid must be 1-128 safe identifier characters"
+        )
+    provenance = event.get("provenance")
+    if provenance is not None and not isinstance(provenance, dict):
+        raise EventValidationError("provenance must be a mapping")
     return event

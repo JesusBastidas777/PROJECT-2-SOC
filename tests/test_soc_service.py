@@ -30,6 +30,10 @@ class SOCServiceFlowTests(unittest.TestCase):
             self.assertEqual(response.schema_version, "1.0")
             json.dumps(response.to_dict())
         self.assertEqual(search.metadata["count"], 1)
+        self.assertEqual(
+            ingest.data["event"]["event_uid"], search.data["events"][0]["event_uid"]
+        )
+        self.assertEqual(search.data["events"][0]["provenance"]["source"], "edr")
         self.assertEqual(investigation.data.host_profile.hostname, "FOREX-01")
         self.assertGreaterEqual(analysis.metadata["count"], 1)
 

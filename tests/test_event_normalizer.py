@@ -95,6 +95,28 @@ class EventNormalizerTests(unittest.TestCase):
         self.assertEqual(normalized["file_hash"], "abc")
         self.assertEqual(normalized["vendor_field"], "retained")
 
+    def test_adds_stable_identity_and_provenance_without_reusing_event_id(self):
+        event = self.complete_event(event_id=4688)
+        first = self.normalizer.normalize(event)
+        second = self.normalizer.normalize(event)
+        self.assertEqual(first["event_uid"], second["event_uid"])
+        self.assertTrue(first["event_uid"].startswith("evt-"))
+        self.assertEqual(first["event_id"], 4688)
+        self.assertEqual(first["provenance"], {"source": "edr"})
+        self.assertEqual(first["event_schema_version"], "1.0")
+        self.assertIsNotNone(datetime.fromisoformat(first["ingested_at"]).tzinfo)
+
+    def test_preserves_valid_producer_uid_and_rejects_invalid_uid(self):
+        normalized = self.normalizer.normalize(self.complete_event(event_uid="forex:42"))
+        self.assertEqual(normalized["event_uid"], "forex:42")
+        with self.assertRaisesRegex(EventValidationError, "event_uid"):
+            self.normalizer.normalize(self.complete_event(event_uid="bad uid"))
+
+    def test_identity_changes_when_event_content_changes(self):
+        first = self.normalizer.normalize(self.complete_event(process_name="one.exe"))
+        second = self.normalizer.normalize(self.complete_event(process_name="two.exe"))
+        self.assertNotEqual(first["event_uid"], second["event_uid"])
+
 
 if __name__ == "__main__":
 

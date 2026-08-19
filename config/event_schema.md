@@ -51,3 +51,15 @@ confidence
 
 
 `event_id` is optional and may be a string or integer.
+
+## Identity and provenance
+
+Newly ingested events receive an `event_uid` that identifies the event record
+without changing the producer-specific meaning of `event_id`. Producers may
+supply an `event_uid` containing 1-128 letters, digits, dots, underscores,
+colons, or hyphens. Otherwise the SOC derives a stable SHA-256-based identifier
+from the normalized event.
+
+`ingested_at` records when the SOC normalized the event, `event_schema_version`
+identifies this additive event contract, and `provenance.source` records the
+declared source. Existing stored events without these fields remain readable.

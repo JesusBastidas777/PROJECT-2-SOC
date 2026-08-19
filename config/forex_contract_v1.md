@@ -25,3 +25,8 @@ Every method returns `SOCResponseV1`. Its JSON shape is:
 `SOCError.to_dict()` returns a stable `code`, `message`, and optional `details` mapping.
 Configuration paths are explicit or use `SOC_BASE_DIR`, `SOC_EVENTS_PATH`, and
 `SOC_ALERTS_PATH`; they never depend on the process current working directory.
+
+New events include a stable `event_uid`, `ingested_at`,
+`event_schema_version`, and a minimal `provenance` mapping. These fields are
+additive: `event_id` retains its producer-specific meaning and legacy stored
+events without identity metadata remain readable.
