@@ -5,7 +5,7 @@ import unittest
 from pathlib import Path
 
 from examples.forex_workflow import run_workflow
-from soc import FOREXAdapter, SOCConfig, SOCService
+from soc import FOREXAdapter, FOREXWorkflow, SOCConfig, SOCService
 from normalization.event_contract import EventValidationError
 
 
@@ -36,10 +36,36 @@ class FOREXAdapterTests(unittest.TestCase):
             first = run_workflow(service, event)
             retry = FOREXAdapter().ingest(service, event)
             self.assertTrue(retry.metadata["duplicate"])
-            self.assertEqual(first["host"]["data"]["host"]["hostname"], "FOREX")
-            self.assertGreaterEqual(first["alerts"]["metadata"]["count"], 1)
-            self.assertTrue(first["summary"]["data"]["summary"]["attention_required"])
+            self.assertEqual(first["data"]["host"]["hostname"], "FOREX")
+            self.assertGreaterEqual(len(first["data"]["alerts"]), 1)
+            self.assertTrue(first["data"]["summary"]["attention_required"])
             json.dumps(first)
+
+    def test_workflow_context_and_portable_report_use_public_responses(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            service = SOCService(SOCConfig(base_dir=root / "soc"))
+            workflow = FOREXWorkflow(service)
+            assessed = workflow.ingest_and_assess({
+                "forex_event_id": "workflow-1", "terminal_id": "FOREX",
+                "type": "process_creation", "severity": "high",
+                "process_name": "psexec.exe", "timestamp": "2026-08-19T00:00:00Z",
+            })
+            context = workflow.get_terminal_context("forex", recent_limit=1)
+            destination = root / "reports" / "terminal.json"
+            exported = workflow.export_terminal_report(
+                "FOREX", destination, recent_limit=1,
+                generated_at="2026-08-19T12:00:00+00:00",
+            )
+            self.assertEqual(assessed.schema_version, "1.0")
+            self.assertTrue(context.metadata["found"])
+            report = json.loads(destination.read_text(encoding="utf-8"))
+            self.assertEqual(report["report_version"], "1.0")
+            self.assertEqual(report["identity"]["hostname"], "FOREX")
+            self.assertEqual(report["generated_at"], "2026-08-19T12:00:00+00:00")
+            for field in ("statistics", "recent_events", "detections", "alerts", "summary"):
+                self.assertIn(field, report)
+            self.assertEqual(exported.data["export"]["path"], str(destination))
 
     def test_invalid_forex_event_uses_normal_validation(self):
         with tempfile.TemporaryDirectory() as directory:

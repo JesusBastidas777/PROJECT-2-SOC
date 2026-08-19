@@ -4,7 +4,7 @@ from soc.config import SOCConfig
 from soc.models import SOCResponseV1
 
 __all__ = [
-    "FOREXAdapter", "SOCConfig", "SOCComponents", "SOCResponseV1", "SOCService",
+    "FOREXAdapter", "FOREXWorkflow", "SOCConfig", "SOCComponents", "SOCResponseV1", "SOCService",
     "build_components"
 ]
 
@@ -16,7 +16,7 @@ def __getattr__(name):
     if name == "SOCService":
         from soc.service import SOCService
         return SOCService
-    if name == "FOREXAdapter":
-        from soc.integrations import FOREXAdapter
-        return FOREXAdapter
+    if name in {"FOREXAdapter", "FOREXWorkflow"}:
+        from soc.integrations import FOREXAdapter, FOREXWorkflow
+        return {"FOREXAdapter": FOREXAdapter, "FOREXWorkflow": FOREXWorkflow}[name]
     raise AttributeError(name)

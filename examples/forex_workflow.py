@@ -3,20 +3,11 @@
 import json
 import tempfile
 
-from soc import FOREXAdapter, SOCConfig, SOCService
+from soc import FOREXWorkflow, SOCConfig, SOCService
 
 
 def run_workflow(service, forex_event):
-    adapter = FOREXAdapter()
-    ingestion = adapter.ingest(service, forex_event)
-    hostname = ingestion.data["event"]["host"]
-    alerts = service.create_alerts(hostname)
-    return {
-        "ingestion": ingestion.to_dict(),
-        "host": service.get_host(hostname).to_dict(),
-        "alerts": alerts.to_dict(),
-        "summary": service.operational_summary(hostname=hostname).to_dict(),
-    }
+    return FOREXWorkflow(service).ingest_and_assess(forex_event).to_dict()
 
 
 def main():

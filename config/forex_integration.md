@@ -3,11 +3,15 @@
 FOREX should import only the stable `soc` package:
 
 ```python
-from soc import FOREXAdapter, SOCConfig, SOCService
+from soc import FOREXAdapter, FOREXWorkflow, SOCConfig, SOCService
 
 service = SOCService(SOCConfig.from_env())
 adapter = FOREXAdapter()
 response = adapter.ingest(service, forex_event)
+workflow = FOREXWorkflow(service)
+assessment = workflow.ingest_and_assess(forex_event)
+context = workflow.get_terminal_context("FOREX-01")
+report = workflow.export_terminal_report("FOREX-01", "reports/forex-01.json")
 ```
 
 `FOREXAdapter.adapt` maps `terminal_id` to `host`, `type` to `event_type`,
@@ -28,3 +32,9 @@ python3 -m examples.forex_workflow
 The workflow ingests an event, retries safely when called again, discovers its
 host, promotes detections to alerts, and obtains an operational summary. It
 does not require a network service or any external dependency.
+
+All workflow methods return `SOCResponseV1` and call only public `SOCService`
+methods. Reports are versioned, self-contained JSON with host identity and
+statistics, recent events, detections, open alerts, operational summary,
+parameters, and generation time. Export uses atomic creation and refuses to
+overwrite an existing destination unless `overwrite=True` is explicit.

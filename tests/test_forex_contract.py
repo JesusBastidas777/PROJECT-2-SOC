@@ -5,7 +5,7 @@ import unittest
 
 class FOREXContractTests(unittest.TestCase):
     def test_forex_uses_only_public_v1_interface(self):
-        from soc import FOREXAdapter, SOCConfig, SOCService
+        from soc import FOREXAdapter, FOREXWorkflow, SOCConfig, SOCService
         from soc.models import EventQueryV1
 
         with tempfile.TemporaryDirectory() as directory:
@@ -18,6 +18,9 @@ class FOREXContractTests(unittest.TestCase):
             payload = service.search_events(
                 EventQueryV1(hostname="FOREX")
             ).to_dict()
+            self.assertEqual(
+                FOREXWorkflow(service).get_terminal_context("FOREX").schema_version, "1.0"
+            )
         self.assertEqual(payload["schema_version"], "1.0")
         self.assertEqual(payload["data"]["events"][0]["host"], "FOREX")
         self.assertIn("event_uid", payload["data"]["events"][0])

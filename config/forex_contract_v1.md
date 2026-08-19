@@ -101,3 +101,9 @@ FOREX may optionally use the public `FOREXAdapter` to map `terminal_id`,
 `type`, and `forex_event_id` into the canonical contract. The adapter preserves
 unknown producer fields and delegates validation and storage to `SOCService`.
 See `config/forex_integration.md` for an executable reference workflow.
+
+The public `FOREXWorkflow` facade provides `ingest_and_assess`,
+`get_terminal_context`, and `export_terminal_report`. It composes only public
+`SOCService` calls and every method returns `SOCResponseV1`. Portable reports
+are versioned JSON documents written atomically with exclusive creation by
+default; overwriting requires an explicit option.

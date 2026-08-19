@@ -8,6 +8,7 @@ from pathlib import Path
 from soc.config import SOCConfig
 from soc.errors import SOCError
 from soc.service import SOCService
+from soc.integrations.forex import FOREXWorkflow
 
 
 def build_parser():
@@ -98,6 +99,18 @@ def build_parser():
         command.add_argument("--skip-final-verification", action="store_true")
     maintenance_history = maintenance_commands.add_parser("history")
     maintenance_history.add_argument("--limit", type=int, default=20)
+    forex = commands.add_parser("forex", help="run local FOREX workflows")
+    forex_commands = forex.add_subparsers(dest="forex_command", required=True)
+    forex_assess = forex_commands.add_parser("assess")
+    forex_assess.add_argument("event", help="JSON object, or @path")
+    forex_context = forex_commands.add_parser("context")
+    forex_context.add_argument("terminal_id")
+    forex_context.add_argument("--recent-limit", type=int, default=10)
+    forex_report = forex_commands.add_parser("report")
+    forex_report.add_argument("terminal_id")
+    forex_report.add_argument("destination", type=Path)
+    forex_report.add_argument("--recent-limit", type=int, default=10)
+    forex_report.add_argument("--overwrite", action="store_true")
     return parser
 
 
@@ -185,6 +198,16 @@ def _invoke(service, args):
         }
         return service.housekeeping(
             plan_only=args.maintenance_command == "plan", **options
+        )
+    if args.command == "forex":
+        workflow = FOREXWorkflow(service)
+        if args.forex_command == "assess":
+            return workflow.ingest_and_assess(_read_event(args.event))
+        if args.forex_command == "context":
+            return workflow.get_terminal_context(args.terminal_id, args.recent_limit)
+        return workflow.export_terminal_report(
+            args.terminal_id, args.destination, recent_limit=args.recent_limit,
+            overwrite=args.overwrite,
         )
     return service.status()
 

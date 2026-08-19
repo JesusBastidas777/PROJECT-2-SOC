@@ -140,6 +140,22 @@ class CLITests(unittest.TestCase):
         self.assertTrue(json.loads(run.stdout)["data"]["maintenance"]["success"])
         self.assertGreaterEqual(json.loads(history.stdout)["metadata"]["count"], 2)
 
+    def test_forex_assess_context_and_report(self):
+        event = json.dumps({
+            "forex_event_id": "cli-workflow", "terminal_id": "FOREX", "type": "quote",
+            "severity": "low", "timestamp": "2026-08-19T00:00:00Z",
+        })
+        assessed = self.run_cli("forex", "assess", event)
+        context = self.run_cli("forex", "context", "forex", "--recent-limit", "1")
+        destination = Path(self.directory.name) / "forex-report.json"
+        report = self.run_cli("forex", "report", "FOREX", str(destination))
+        duplicate = self.run_cli("forex", "report", "FOREX", str(destination))
+        self.assertEqual(assessed.returncode, 0, assessed.stderr)
+        self.assertTrue(json.loads(context.stdout)["metadata"]["found"])
+        self.assertEqual(report.returncode, 0, report.stderr)
+        self.assertEqual(duplicate.returncode, 1)
+        self.assertEqual(json.loads(destination.read_text())["report_version"], "1.0")
+
 
 if __name__ == "__main__":
     unittest.main()
