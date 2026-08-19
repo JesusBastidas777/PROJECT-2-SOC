@@ -16,6 +16,7 @@ def to_primitive(value):
 
 @dataclass(frozen=True)
 class EventQueryV1:
+    event_uid: Optional[str] = None
     hostname: Optional[str] = None
     process_name: Optional[str] = None
     user: Optional[str] = None
@@ -25,6 +26,7 @@ class EventQueryV1:
     start_timestamp: Optional[str] = None
     end_timestamp: Optional[str] = None
     limit: Optional[int] = None
+    sort_order: str = "newest"
 
 
 @dataclass(frozen=True)

@@ -16,11 +16,13 @@ class EventSearchTests(unittest.TestCase):
         events = [
             {
                 "host": "HOST-01", "process_name": "powershell.exe",
+                "event_uid": "evt-a",
                 "user": "alice", "event_id": 4688, "source": "edr",
                 "severity": "high", "timestamp": "2026-08-18T10:00:00+00:00",
             },
             {
                 "host": "HOST-01", "process_name": "cmd.exe",
+                "event_uid": "evt-b",
                 "user": "bob", "event_id": 1, "source": "sysmon",
                 "severity": "low", "timestamp": "2026-08-18T11:00:00+00:00",
             },
@@ -80,6 +82,20 @@ class EventSearchTests(unittest.TestCase):
             end_timestamp="2026-08-18T11:00:00Z",
         )
         self.assertEqual([event.get("process_name") for event in matches], ["cmd.exe"])
+
+    def test_uid_lookup_uses_the_index(self):
+        self.assertEqual(self.search.search(event_uid="evt-b")[0]["process_name"], "cmd.exe")
+        self.assertEqual(self.search.search(event_uid="missing"), [])
+
+    def test_order_is_deterministic_for_new_and_legacy_events(self):
+        newest = self.search.search(hostname="HOST-01")
+        oldest = self.search.search(hostname="HOST-01", sort_order="oldest")
+        self.assertEqual([item.get("event_uid") for item in newest], ["evt-b", "evt-a", None])
+        self.assertEqual([item.get("event_uid") for item in oldest], [None, "evt-a", "evt-b"])
+
+    def test_rejects_unknown_sort_order(self):
+        with self.assertRaises(ValueError):
+            self.search.search(sort_order="sideways")
 
 
 if __name__ == "__main__":

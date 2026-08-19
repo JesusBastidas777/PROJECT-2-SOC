@@ -46,6 +46,14 @@ class SOCService:
             data={"events": events, "query": query}, metadata={"count": len(events)}
         )
 
+    def get_event(self, event_uid):
+        """Return one identified event without exposing storage internals."""
+        with self._components.status.measure("get_event"):
+            event = self._components.reader.find_by_uid(event_uid)
+        return SOCResponseV1(
+            data={"event": event}, metadata={"found": event is not None}
+        )
+
     def investigate_host(self, hostname, timeline_limit=None, newest_first=True):
         limit = timeline_limit or self.config.timeline_limit
         with self._components.status.measure("investigate_host"):

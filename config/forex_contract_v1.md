@@ -13,10 +13,15 @@ result = service.search_events(EventQueryV1(hostname="HOST-01", limit=100))
 payload = result.to_dict()
 ```
 
-The stable methods are `ingest_event`, `search_events`, `investigate_host`, `analyze_host`,
+The stable methods are `ingest_event`, `search_events`, `get_event`, `investigate_host`, `analyze_host`,
 `create_alerts`, `search_alerts`, `transition_alert`, `list_hosts`, `get_host`, `health`,
 `operational_summary`, `export_events`, `import_events`, `audit_storage`,
 `repair_storage`, `metrics`, and `status`.
+
+Event searches accept `event_uid` for direct indexed lookup and `sort_order`
+(`newest` by default or `oldest`). Results are ordered deterministically by
+timestamp, event UID, and stable stored position. Legacy records without valid
+timestamps or UIDs remain searchable.
 Every method returns `SOCResponseV1`. Its JSON shape is:
 
 ```json

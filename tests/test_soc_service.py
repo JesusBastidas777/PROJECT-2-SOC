@@ -34,6 +34,9 @@ class SOCServiceFlowTests(unittest.TestCase):
             ingest.data["event"]["event_uid"], search.data["events"][0]["event_uid"]
         )
         self.assertEqual(search.data["events"][0]["provenance"]["source"], "edr")
+        lookup = self.service.get_event(ingest.data["event"]["event_uid"])
+        self.assertTrue(lookup.metadata["found"])
+        self.assertEqual(lookup.data["event"]["host"], "FOREX-01")
         self.assertEqual(investigation.data.host_profile.hostname, "FOREX-01")
         self.assertGreaterEqual(analysis.metadata["count"], 1)
 

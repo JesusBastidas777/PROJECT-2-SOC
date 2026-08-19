@@ -66,6 +66,16 @@ class CLITests(unittest.TestCase):
         self.assertTrue(first["metadata"]["stored"])
         self.assertTrue(second["metadata"]["duplicate"])
 
+    def test_search_accepts_uid_and_sort_order(self):
+        event = json.dumps({
+            "event_uid": "forex:cli-1", "host": "FOREX", "event_type": "quote",
+            "source": "forex", "severity": "low", "timestamp": "2026-08-18T00:00:00Z",
+        })
+        self.run_cli("ingest", event)
+        result = self.run_cli("search", "--event-uid", "forex:cli-1", "--sort-order", "oldest")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(json.loads(result.stdout)["metadata"]["count"], 1)
+
 
 if __name__ == "__main__":
     unittest.main()

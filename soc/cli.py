@@ -21,6 +21,7 @@ def build_parser():
     ingest.add_argument("event", help="JSON object, or @path to read a UTF-8 file")
 
     search = commands.add_parser("search", help="search stored events")
+    search.add_argument("--event-uid")
     search.add_argument("--host", dest="hostname")
     search.add_argument("--process", dest="process_name")
     search.add_argument("--user")
@@ -30,6 +31,7 @@ def build_parser():
     search.add_argument("--start", dest="start_timestamp")
     search.add_argument("--end", dest="end_timestamp")
     search.add_argument("--limit", type=int)
+    search.add_argument("--sort-order", choices=("newest", "oldest"), default="newest")
 
     investigate = commands.add_parser("investigate", help="investigate one host")
     investigate.add_argument("hostname")
@@ -83,8 +85,8 @@ def _invoke(service, args):
     if args.command == "search":
         filters = {
             name: getattr(args, name) for name in (
-                "hostname", "process_name", "user", "event_id", "source", "severity",
-                "start_timestamp", "end_timestamp", "limit",
+                "event_uid", "hostname", "process_name", "user", "event_id", "source",
+                "severity", "start_timestamp", "end_timestamp", "limit", "sort_order",
             ) if getattr(args, name) is not None
         }
         return service.search_events(**filters)

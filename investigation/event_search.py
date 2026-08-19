@@ -1,4 +1,4 @@
-from normalization.time_utils import parse_timestamp
+from normalization.time_utils import UTC_MIN, parse_timestamp
 from storage.event_reader import EventReader
 from soc.errors import QueryError
 
@@ -21,15 +21,27 @@ class EventSearch:
         event_id=None,
         source=None,
         severity=None,
+        event_uid=None,
         start_timestamp=None,
         end_timestamp=None,
         limit=None,
+        sort_order="newest",
     ):
 
         if limit is not None and (not isinstance(limit, int) or limit <= 0):
             raise QueryError("limit must be a positive integer", details={"limit": limit})
+        if sort_order not in {"newest", "oldest"}:
+            raise QueryError(
+                "sort_order must be 'newest' or 'oldest'",
+                details={"sort_order": sort_order},
+            )
 
-        if hostname is not None:
+        if event_uid is not None:
+
+            found = self.reader.find_by_uid(event_uid)
+            events = [found] if found is not None else []
+
+        elif hostname is not None:
 
             events = self.reader.find_by_host(hostname)
 
@@ -73,6 +85,10 @@ class EventSearch:
 
                 continue
 
+            if event_uid is not None and event.get("event_uid") != event_uid:
+
+                continue
+
             if start is not None or end is not None:
 
                 event_time = self._parse_timestamp(event.get("timestamp"))
@@ -91,8 +107,13 @@ class EventSearch:
 
             matches.append(event)
 
-            if limit is not None and len(matches) >= limit:
+        def order_key(item):
+            event_time = self._parse_timestamp(item.get("timestamp"))
+            return (
+                event_time is not None,
+                event_time or UTC_MIN,
+                str(item.get("event_uid") or ""),
+            )
 
-                break
-
-        return matches
+        matches.sort(key=order_key, reverse=sort_order == "newest")
+        return matches[:limit] if limit is not None else matches
