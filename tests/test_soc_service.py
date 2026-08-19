@@ -57,6 +57,20 @@ class SOCServiceFlowTests(unittest.TestCase):
         self.assertEqual(self.service.search_events(hostname="FOREX").metadata["count"], 1)
         self.assertEqual(self.service.metrics().data["metrics"].duplicates_rejected, 1)
 
+    def test_search_response_exposes_cursor_metadata(self):
+        for number in range(3):
+            self.service.ingest_event({
+                "event_uid": f"evt-page-{number}", "host": "FOREX",
+                "event_type": "quote", "source": "forex", "severity": "low",
+                "timestamp": f"2026-08-18T0{number}:00:00Z",
+            })
+        first = self.service.search_events(hostname="FOREX", limit=2)
+        second = self.service.search_events(
+            hostname="FOREX", limit=2, cursor=first.metadata["next_cursor"]
+        )
+        self.assertTrue(first.metadata["has_more"])
+        self.assertEqual(second.metadata["count"], 1)
+
 
 if __name__ == "__main__":
     unittest.main()

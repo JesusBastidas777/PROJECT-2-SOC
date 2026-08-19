@@ -1,4 +1,7 @@
 from normalization.time_utils import UTC_MIN, parse_timestamp
+from investigation.pagination import (
+    decode_cursor, encode_cursor, event_fingerprint, query_fingerprint,
+)
 from storage.event_reader import EventReader
 from soc.errors import QueryError
 
@@ -117,3 +120,40 @@ class EventSearch:
 
         matches.sort(key=order_key, reverse=sort_order == "newest")
         return matches[:limit] if limit is not None else matches
+
+    def search_page(self, *, cursor=None, max_limit=500, **filters):
+        limit = filters.pop("limit", None)
+        if limit is not None and (not isinstance(limit, int) or limit <= 0):
+            raise QueryError("limit must be a positive integer", details={"limit": limit})
+        if limit is not None and limit > max_limit:
+            raise QueryError(
+                f"limit must not exceed {max_limit}",
+                details={"limit": limit, "max_limit": max_limit},
+            )
+
+        ordered = self.search(limit=None, **filters)
+        cursor_filters = {key: value for key, value in filters.items() if value is not None}
+        query_hash = query_fingerprint(cursor_filters)
+        start = 0
+        if cursor is not None:
+            anchor, occurrence = decode_cursor(cursor, query_hash)
+            seen = 0
+            for position, event in enumerate(ordered):
+                if event_fingerprint(event) == anchor:
+                    seen += 1
+                    if seen == occurrence:
+                        start = position + 1
+                        break
+            else:
+                raise QueryError("cursor anchor is no longer available")
+
+        page = ordered[start:] if limit is None else ordered[start:start + limit]
+        has_more = start + len(page) < len(ordered)
+        next_cursor = None
+        if has_more and page:
+            anchor = event_fingerprint(page[-1])
+            occurrence = sum(
+                event_fingerprint(event) == anchor for event in ordered[:start + len(page)]
+            )
+            next_cursor = encode_cursor(query_hash, anchor, occurrence)
+        return {"events": page, "has_more": has_more, "next_cursor": next_cursor}

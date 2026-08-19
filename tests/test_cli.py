@@ -76,6 +76,20 @@ class CLITests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(json.loads(result.stdout)["metadata"]["count"], 1)
 
+    def test_search_cursor_can_be_passed_to_cli(self):
+        for number in range(2):
+            self.run_cli("ingest", json.dumps({
+                "event_uid": f"forex:page-{number}", "host": "FOREX",
+                "event_type": "quote", "source": "forex", "severity": "low",
+                "timestamp": f"2026-08-18T0{number}:00:00Z",
+            }))
+        first = json.loads(self.run_cli("search", "--limit", "1").stdout)
+        second = self.run_cli(
+            "search", "--limit", "1", "--cursor", first["metadata"]["next_cursor"]
+        )
+        self.assertEqual(second.returncode, 0, second.stderr)
+        self.assertFalse(json.loads(second.stdout)["metadata"]["has_more"])
+
 
 if __name__ == "__main__":
     unittest.main()

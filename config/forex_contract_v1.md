@@ -22,6 +22,13 @@ Event searches accept `event_uid` for direct indexed lookup and `sort_order`
 (`newest` by default or `oldest`). Results are ordered deterministically by
 timestamp, event UID, and stable stored position. Legacy records without valid
 timestamps or UIDs remain searchable.
+
+Search pagination uses an opaque `cursor` bound to the filters and sort order.
+Responses add `has_more` and `next_cursor` metadata while preserving
+`data.events`. Pagination is anchored to the last returned event: newly
+ingested events that sort before that anchor are not replayed, while events
+that sort after it can appear on later pages. `SOC_SEARCH_LIMIT_MAX` bounds a
+requested page size (500 by default).
 Every method returns `SOCResponseV1`. Its JSON shape is:
 
 ```json

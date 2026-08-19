@@ -41,9 +41,16 @@ class SOCService:
         else:
             query = EventQueryV1(**filters)
         with self._components.status.measure("search_events"):
-            events = self._components.search.search(**filters)
+            page = self._components.search.search_page(
+                max_limit=self.config.search_limit_max, **filters
+            )
+            events = page["events"]
         return SOCResponseV1(
-            data={"events": events, "query": query}, metadata={"count": len(events)}
+            data={"events": events, "query": query},
+            metadata={
+                "count": len(events), "has_more": page["has_more"],
+                "next_cursor": page["next_cursor"],
+            },
         )
 
     def get_event(self, event_uid):

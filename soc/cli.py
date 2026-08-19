@@ -32,6 +32,7 @@ def build_parser():
     search.add_argument("--end", dest="end_timestamp")
     search.add_argument("--limit", type=int)
     search.add_argument("--sort-order", choices=("newest", "oldest"), default="newest")
+    search.add_argument("--cursor")
 
     investigate = commands.add_parser("investigate", help="investigate one host")
     investigate.add_argument("hostname")
@@ -86,7 +87,7 @@ def _invoke(service, args):
         filters = {
             name: getattr(args, name) for name in (
                 "event_uid", "hostname", "process_name", "user", "event_id", "source",
-                "severity", "start_timestamp", "end_timestamp", "limit", "sort_order",
+                "severity", "start_timestamp", "end_timestamp", "limit", "sort_order", "cursor",
             ) if getattr(args, name) is not None
         }
         return service.search_events(**filters)

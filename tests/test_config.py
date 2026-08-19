@@ -37,6 +37,12 @@ class SOCConfigTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             SOCConfig(lock_timeout=-1)
 
+    def test_search_limit_is_configurable_and_validated(self):
+        config = SOCConfig.from_env({"SOC_SEARCH_LIMIT_MAX": "25"})
+        self.assertEqual(config.search_limit_max, 25)
+        with self.assertRaises(ValueError):
+            SOCConfig(search_limit_max=0)
+
     def test_factory_wires_shared_reader_without_global_state(self):
         with tempfile.TemporaryDirectory() as directory:
             config = SOCConfig(base_dir=directory)

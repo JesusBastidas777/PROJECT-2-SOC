@@ -27,6 +27,7 @@ class EventQueryV1:
     end_timestamp: Optional[str] = None
     limit: Optional[int] = None
     sort_order: str = "newest"
+    cursor: Optional[str] = None
 
 
 @dataclass(frozen=True)

@@ -21,6 +21,7 @@ class SOCConfig:
     alerts_path: Optional[Path] = None
     timeline_limit: int = 10
     lock_timeout: float = 5.0
+    search_limit_max: int = 500
 
     def __post_init__(self):
         base_dir = Path(self.base_dir).expanduser().resolve()
@@ -37,6 +38,8 @@ class SOCConfig:
             raise ValueError("timeline_limit must be positive")
         if self.lock_timeout < 0:
             raise ValueError("lock_timeout must not be negative")
+        if self.search_limit_max <= 0:
+            raise ValueError("search_limit_max must be positive")
 
     @classmethod
     def from_env(cls, env: Optional[Mapping[str, str]] = None, **overrides):
@@ -51,6 +54,9 @@ class SOCConfig:
             ),
             "lock_timeout": overrides.pop(
                 "lock_timeout", float(values.get("SOC_LOCK_TIMEOUT", "5"))
+            ),
+            "search_limit_max": overrides.pop(
+                "search_limit_max", int(values.get("SOC_SEARCH_LIMIT_MAX", "500"))
             ),
         }
         if overrides:
