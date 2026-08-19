@@ -12,6 +12,7 @@ workflow = FOREXWorkflow(service)
 assessment = workflow.ingest_and_assess(forex_event)
 context = workflow.get_terminal_context("FOREX-01")
 report = workflow.export_terminal_report("FOREX-01", "reports/forex-01.json")
+posture = workflow.security_posture("FOREX-01")
 ```
 
 `FOREXAdapter.adapt` maps `terminal_id` to `host`, `type` to `event_type`,
@@ -38,3 +39,9 @@ methods. Reports are versioned, self-contained JSON with host identity and
 statistics, recent events, detections, open alerts, operational summary,
 parameters, and generation time. Export uses atomic creation and refuses to
 overwrite an existing destination unless `overwrite=True` is explicit.
+
+For the smallest decision boundary, call `security_posture()` globally or pass
+a terminal ID. It returns only a versioned posture state, explainable risk,
+urgent-alert and open-incident counts, top reasons, a descriptive next step,
+generation time, and bounded alert/incident references. It does not return the
+full event stream and does not execute response actions.

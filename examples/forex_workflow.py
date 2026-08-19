@@ -10,6 +10,11 @@ def run_workflow(service, forex_event):
     return FOREXWorkflow(service).ingest_and_assess(forex_event).to_dict()
 
 
+def get_security_posture(service, terminal_id=None):
+    """One-call security posture suitable for a FOREX decision boundary."""
+    return FOREXWorkflow(service).security_posture(terminal_id).to_dict()
+
+
 def main():
     event = {
         "forex_event_id": "order-20260819-001",
@@ -21,8 +26,10 @@ def main():
         "symbol": "EURUSD",
     }
     with tempfile.TemporaryDirectory() as directory:
-        result = run_workflow(SOCService(SOCConfig(base_dir=directory)), event)
-    print(json.dumps(result, ensure_ascii=False, indent=2))
+        service = SOCService(SOCConfig(base_dir=directory))
+        result = run_workflow(service, event)
+        posture = get_security_posture(service, "FOREX-01")
+    print(json.dumps({"assessment": result, "posture": posture}, ensure_ascii=False, indent=2))
 
 
 if __name__ == "__main__":

@@ -4,7 +4,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from examples.forex_workflow import run_workflow
+from examples.forex_workflow import get_security_posture, run_workflow
 from soc import FOREXAdapter, FOREXWorkflow, SOCConfig, SOCService
 from normalization.event_contract import EventValidationError
 
@@ -72,6 +72,24 @@ class FOREXAdapterTests(unittest.TestCase):
             service = SOCService(SOCConfig(base_dir=directory))
             with self.assertRaises(EventValidationError):
                 FOREXAdapter().ingest(service, {"forex_event_id": "missing-host"})
+
+    def test_security_posture_is_compact_for_global_and_terminal_scope(self):
+        with tempfile.TemporaryDirectory() as directory:
+            service = SOCService(SOCConfig(base_dir=directory))
+            FOREXWorkflow(service).ingest_and_assess({
+                "forex_event_id": "posture-1", "terminal_id": "FOREX-01",
+                "type": "process_creation", "severity": "high",
+                "process_name": "psexec.exe", "timestamp": "2026-08-19T00:00:00Z",
+            })
+            terminal = FOREXWorkflow(service).security_posture("FOREX-01")
+            global_posture = get_security_posture(service)
+        posture = terminal.data["posture"]
+        self.assertEqual(terminal.schema_version, "1.0")
+        self.assertIn(posture["state"], {"clear", "attention", "high_risk", "degraded"})
+        self.assertTrue(posture["attention_required"])
+        self.assertGreaterEqual(posture["urgent_alerts"], 1)
+        self.assertNotIn("events", posture)
+        self.assertEqual(global_posture["schema_version"], "1.0")
 
     def test_examples_import_only_the_public_soc_package(self):
         for relative in ("examples/forex_adapter.py", "examples/forex_workflow.py"):

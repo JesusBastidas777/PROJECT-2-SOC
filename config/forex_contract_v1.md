@@ -48,7 +48,7 @@ log. Repeating compaction on an already compact log is a no-op. Event records
 are never compacted by this operation.
 
 `create_backup`, `verify_backup`, and `restore_backup` manage a consistent
-events-and-alerts snapshot with relative paths, sizes, SHA-256 checksums, and a
+events, alerts, and incidents snapshot with relative paths, sizes, SHA-256 checksums, and a
 versioned logical signature. Restore supports dry-run, creates a pre-restore
 safety backup, replaces both stores under ordered locks, rolls back both on a
 partial failure, and rebuilds derived UID data.
@@ -107,3 +107,10 @@ The public `FOREXWorkflow` facade provides `ingest_and_assess`,
 `SOCService` calls and every method returns `SOCResponseV1`. Portable reports
 are versioned JSON documents written atomically with exclusive creation by
 default; overwriting requires an explicit option.
+
+`FOREXWorkflow.security_posture(terminal_id=None)` is the compact one-call
+security facade. It composes only public `SOCService` methods and returns
+`state` (`clear`, `attention`, `high_risk`, or `degraded`), an explainable risk
+summary, urgent-alert and open-incident counts, top reasons, a descriptive next
+step, generation time, and bounded references. The response remains
+`SOCResponseV1` and intentionally excludes the full event stream.

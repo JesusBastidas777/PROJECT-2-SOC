@@ -140,6 +140,8 @@ def build_parser():
     forex_context = forex_commands.add_parser("context")
     forex_context.add_argument("terminal_id")
     forex_context.add_argument("--recent-limit", type=int, default=10)
+    forex_posture = forex_commands.add_parser("posture")
+    forex_posture.add_argument("terminal_id", nargs="?")
     forex_report = forex_commands.add_parser("report")
     forex_report.add_argument("terminal_id")
     forex_report.add_argument("destination", type=Path)
@@ -278,6 +280,8 @@ def _invoke(service, args):
             return workflow.ingest_and_assess(_read_event(args.event))
         if args.forex_command == "context":
             return workflow.get_terminal_context(args.terminal_id, args.recent_limit)
+        if args.forex_command == "posture":
+            return workflow.security_posture(args.terminal_id)
         return workflow.export_terminal_report(
             args.terminal_id, args.destination, recent_limit=args.recent_limit,
             overwrite=args.overwrite,

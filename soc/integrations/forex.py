@@ -79,6 +79,64 @@ class FOREXWorkflow:
             "summary": summary.data["summary"],
         }, metadata={"terminal_id": terminal_id, "hostname": hostname, "found": detail is not None})
 
+    def security_posture(self, terminal_id=None):
+        """Return a compact posture using exclusively public SOCService calls."""
+        center_response = self.service.command_center(hostname=terminal_id, limit=5)
+        center = center_response.data["command_center"]
+        if terminal_id is not None:
+            risk = self.service.get_host_risk(terminal_id).data["risk"]
+        else:
+            risk = center["top_risk_hosts"][0] if center["top_risk_hosts"] else {
+                "hostname": None, "known_host": False, "score": 0, "level": "low"
+            }
+        queue = center["attention_queue"]
+        urgent_alerts = queue["totals_by_priority"].get("P1", 0) + queue[
+            "totals_by_priority"
+        ].get("P2", 0)
+        open_incidents = self.service.list_incidents(hostname=terminal_id).data["incidents"]
+        open_incidents = [item for item in open_incidents if item.status != "closed"]
+
+        risk_level = risk.level if hasattr(risk, "level") else risk.get("level", "low")
+        risk_score = risk.score if hasattr(risk, "score") else risk.get("score", 0)
+        risk_hostname = (
+            risk.hostname if hasattr(risk, "hostname") else risk.get("hostname")
+        )
+        if center_response.status == "degraded" or center["overall_state"] == "degraded":
+            state = "degraded"
+        elif risk_level in {"high", "critical"} or urgent_alerts:
+            state = "high_risk"
+        elif center["attention_required"]:
+            state = "attention"
+        else:
+            state = "clear"
+        if center["recommendations"]:
+            next_step = center["recommendations"][0]["recommended_next_step"]
+        elif queue["entries"]:
+            next_step = "Review the highest-ranked alert in the attention queue."
+        elif state == "degraded":
+            next_step = "Review SOC health and storage integrity before relying on posture data."
+        else:
+            next_step = "Continue normal monitoring."
+        return SOCResponseV1(data={
+            "posture": {
+                "state": state,
+                "attention_required": state != "clear",
+                "risk": {
+                    "hostname": risk_hostname, "score": risk_score, "level": risk_level,
+                    "heuristic": True,
+                },
+                "urgent_alerts": urgent_alerts,
+                "open_incidents": len(open_incidents),
+                "references": {
+                    "alert_ids": [item["alert"].alert_id for item in queue["entries"][:5]],
+                    "incident_ids": [item.incident_id for item in open_incidents[:5]],
+                },
+                "top_reasons": list(center["reasons"][:5]),
+                "recommended_next_step": next_step,
+                "generated_at": center["generated_at"],
+            }
+        }, metadata={"terminal_id": terminal_id, "scope": "terminal" if terminal_id else "global"})
+
     def export_terminal_report(self, terminal_id, destination, *, recent_limit=10,
                                overwrite=False, generated_at=None):
         context = self.get_terminal_context(terminal_id, recent_limit=recent_limit)

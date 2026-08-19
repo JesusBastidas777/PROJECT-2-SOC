@@ -1,6 +1,8 @@
 import json
+import ast
 import tempfile
 import unittest
+from pathlib import Path
 
 
 class FOREXContractTests(unittest.TestCase):
@@ -26,6 +28,13 @@ class FOREXContractTests(unittest.TestCase):
         self.assertIn("event_uid", payload["data"]["events"][0])
         self.assertEqual(payload["data"]["events"][0]["event_id"], None)
         json.dumps(payload)
+
+    def test_forex_workflow_does_not_import_internal_soc_layers(self):
+        path = Path(__file__).resolve().parent.parent / "soc" / "integrations" / "forex.py"
+        tree = ast.parse(path.read_text(encoding="utf-8"))
+        imports = [node.module for node in ast.walk(tree) if isinstance(node, ast.ImportFrom)]
+        forbidden = ("storage", "alerting", "detection", "investigation", "incident")
+        self.assertFalse(any(module and module.startswith(forbidden) for module in imports))
 
 
 if __name__ == "__main__":

@@ -154,11 +154,18 @@ class CLITests(unittest.TestCase):
         context = self.run_cli("forex", "context", "forex", "--recent-limit", "1")
         destination = Path(self.directory.name) / "forex-report.json"
         report = self.run_cli("forex", "report", "FOREX", str(destination))
+        posture = self.run_cli("forex", "posture", "FOREX")
+        global_posture = self.run_cli("forex", "posture")
         duplicate = self.run_cli("forex", "report", "FOREX", str(destination))
         self.assertEqual(assessed.returncode, 0, assessed.stderr)
         self.assertTrue(json.loads(context.stdout)["metadata"]["found"])
         self.assertEqual(report.returncode, 0, report.stderr)
         self.assertEqual(duplicate.returncode, 1)
+        self.assertEqual(posture.returncode, 0, posture.stderr)
+        self.assertEqual(global_posture.returncode, 0, global_posture.stderr)
+        self.assertIn(json.loads(posture.stdout)["data"]["posture"]["state"], {
+            "clear", "attention", "high_risk", "degraded"
+        })
         self.assertEqual(json.loads(destination.read_text())["report_version"], "1.0")
 
     def test_incident_create_get_and_transition(self):
