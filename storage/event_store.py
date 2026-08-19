@@ -6,13 +6,17 @@ from pathlib import Path
 
 from storage.errors import StorageWriteError
 
+
+def _default_log_file():
+    return Path(__file__).resolve().parent / "event_logs" / "events.jsonl"
+
 class EventStore:
 
     def __init__(self, log_file=None):
 
         self.events = []
 
-        self.log_file = Path(log_file or "storage/event_logs/events.jsonl")
+        self.log_file = Path(log_file) if log_file is not None else _default_log_file()
         try:
             self.log_file.parent.mkdir(parents=True, exist_ok=True)
             self.log_file.touch(exist_ok=True)
@@ -37,4 +41,3 @@ class EventStore:
     def show_summary(self):
 
         print(f"Total events: {self.count()}")
-
