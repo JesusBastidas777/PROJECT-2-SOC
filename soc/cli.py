@@ -71,6 +71,10 @@ def build_parser():
     integrity = commands.add_parser("integrity", help="audit or repair event storage")
     integrity.add_argument("--repair", action="store_true")
     integrity.add_argument("--quarantine-path", type=Path)
+    retention = commands.add_parser("retention", help="plan or apply event retention")
+    retention.add_argument("--max-age-days", type=float)
+    retention.add_argument("--max-bytes", type=int)
+    retention.add_argument("--apply", action="store_true")
     return parser
 
 
@@ -134,6 +138,9 @@ def _invoke(service, args):
         return service.import_events(args.path, dry_run=args.dry_run)
     if args.command == "integrity":
         return service.repair_storage(args.quarantine_path) if args.repair else service.audit_storage()
+    if args.command == "retention":
+        options = {"max_age_days": args.max_age_days, "max_bytes": args.max_bytes}
+        return service.apply_retention(**options) if args.apply else service.plan_retention(**options)
     return service.status()
 
 

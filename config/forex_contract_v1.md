@@ -34,6 +34,12 @@ Responses add `has_more` and `next_cursor` metadata while preserving
 ingested events that sort before that anchor are not replayed, while events
 that sort after it can appear on later pages. `SOC_SEARCH_LIMIT_MAX` bounds a
 requested page size (500 by default).
+
+Event retention is explicit and disabled unless a caller invokes
+`plan_retention` or `apply_retention` with an age or size policy. Planning is
+read-only. Applying archives removed JSONL records and a checksummed manifest
+before atomically replacing the active log. Missing or invalid timestamps are
+retained by default and the rebuildable UID index is refreshed afterward.
 Every method returns `SOCResponseV1`. Its JSON shape is:
 
 ```json

@@ -142,6 +142,16 @@ class SOCService:
             quarantine_path
         )})
 
+    def plan_retention(self, *, max_age_days=None, max_bytes=None):
+        return SOCResponseV1(data={"retention": self._components.retention.plan(
+            max_age_days=max_age_days, max_bytes=max_bytes
+        )})
+
+    def apply_retention(self, *, max_age_days=None, max_bytes=None):
+        return SOCResponseV1(data={"retention": self._components.retention.apply(
+            max_age_days=max_age_days, max_bytes=max_bytes
+        )})
+
     def health(self):
         health = self._components.status.health()
         return SOCResponseV1(

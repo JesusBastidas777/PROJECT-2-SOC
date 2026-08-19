@@ -15,6 +15,7 @@ from storage.event_reader import EventReader
 from storage.event_store import EventStore
 from storage.data_transfer import DataTransfer
 from storage.integrity_service import IntegrityService
+from storage.retention_service import RetentionService
 
 
 @dataclass
@@ -32,6 +33,7 @@ class SOCComponents:
     transfer: DataTransfer
     integrity: IntegrityService
     host_details: HostDetail
+    retention: RetentionService
 
 
 def build_components(config=None):
@@ -59,4 +61,8 @@ def build_components(config=None):
         transfer=DataTransfer(reader, store, normalizer, config.lock_timeout),
         integrity=IntegrityService(config.events_path, config.lock_timeout),
         host_details=HostDetail(reader, alerts, inventory),
+        retention=RetentionService(
+            config.events_path, store.uid_index, config.retention_archive_dir,
+            config.lock_timeout,
+        ),
     )

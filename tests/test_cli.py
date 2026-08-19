@@ -5,6 +5,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from storage.event_reader import EventReader
+
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -100,6 +102,16 @@ class CLITests(unittest.TestCase):
         self.assertEqual(detailed.returncode, 0, detailed.stderr)
         self.assertEqual(basic["data"]["host"]["total_events"], 1)
         self.assertEqual(json.loads(detailed.stdout)["data"]["host"]["total_events"], 1)
+
+    def test_retention_defaults_to_a_read_only_plan(self):
+        self.run_cli("ingest", json.dumps({
+            "event_uid": "forex:retain", "host": "FOREX", "event_type": "quote",
+            "source": "forex", "severity": "low", "timestamp": "2020-01-01T00:00:00Z",
+        }))
+        plan = self.run_cli("retention", "--max-age-days", "1")
+        self.assertEqual(plan.returncode, 0, plan.stderr)
+        self.assertFalse(json.loads(plan.stdout)["data"]["retention"]["applied"])
+        self.assertEqual(len(EventReader(self.events).read_events()), 1)
 
 
 if __name__ == "__main__":

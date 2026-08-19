@@ -22,6 +22,7 @@ class SOCConfig:
     timeline_limit: int = 10
     lock_timeout: float = 5.0
     search_limit_max: int = 500
+    retention_archive_dir: Optional[Path] = None
 
     def __post_init__(self):
         base_dir = Path(self.base_dir).expanduser().resolve()
@@ -33,6 +34,10 @@ class SOCConfig:
         object.__setattr__(
             self, "alerts_path",
             _path(str(self.alerts_path or "storage/alert_logs/alerts.jsonl"), base_dir),
+        )
+        object.__setattr__(
+            self, "retention_archive_dir",
+            _path(str(self.retention_archive_dir or "storage/archive"), base_dir),
         )
         if self.timeline_limit <= 0:
             raise ValueError("timeline_limit must be positive")
@@ -57,6 +62,9 @@ class SOCConfig:
             ),
             "search_limit_max": overrides.pop(
                 "search_limit_max", int(values.get("SOC_SEARCH_LIMIT_MAX", "500"))
+            ),
+            "retention_archive_dir": overrides.pop(
+                "retention_archive_dir", values.get("SOC_RETENTION_ARCHIVE_DIR")
             ),
         }
         if overrides:
