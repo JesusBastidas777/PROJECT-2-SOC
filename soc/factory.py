@@ -3,6 +3,7 @@
 from dataclasses import dataclass
 
 from alerting.alert_service import AlertService
+from alerting.attention_queue import AttentionQueue
 from investigation.event_search import EventSearch
 from investigation.host_detail import HostDetail
 from inventory.host_catalog import HostCatalog
@@ -31,6 +32,7 @@ class SOCComponents:
     search: EventSearch
     investigation: InvestigationService
     alerts: AlertService
+    attention: AttentionQueue
     status: StatusService
     inventory: HostCatalog
     reporting: OperationalSummary
@@ -78,6 +80,7 @@ def build_components(config=None):
         search=EventSearch(reader),
         investigation=investigation,
         alerts=alerts,
+        attention=AttentionQueue(alerts),
         status=status,
         inventory=inventory,
         reporting=OperationalSummary(

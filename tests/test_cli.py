@@ -39,6 +39,7 @@ class CLITests(unittest.TestCase):
             ("alerts", "--host", "FOREX", "--status", "open"), ("status",),
             ("hosts", "forex"),
             ("alerts", "--priority", "P2"),
+            ("queue", "--host", "FOREX"),
         ]
         payloads = []
         for command in commands:
@@ -51,6 +52,7 @@ class CLITests(unittest.TestCase):
         self.assertEqual(payloads[5]["data"]["health"]["state"], "healthy")
         self.assertEqual(payloads[6]["data"]["host"]["hostname"], "FOREX")
         self.assertGreaterEqual(payloads[7]["metadata"]["count"], 1)
+        self.assertTrue(payloads[8]["data"]["queue"]["attention_required"])
 
     def test_errors_go_to_stderr_with_consistent_exit_code(self):
         result = self.run_cli("ingest", "not-json")

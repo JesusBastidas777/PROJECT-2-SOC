@@ -97,6 +97,12 @@ class SOCService:
         alerts = self._components.alerts.search(**filters)
         return SOCResponseV1(data={"alerts": alerts}, metadata={"count": len(alerts)})
 
+    def attention_queue(self, **filters):
+        queue = self._components.attention.build(**filters)
+        return SOCResponseV1(data={"queue": queue}, metadata={
+            "count": len(queue["entries"]), "total": queue["total"],
+        })
+
     def transition_alert(self, alert_id, status):
         alert = self._components.alerts.transition(alert_id, status)
         return SOCResponseV1(data={"alert": alert})

@@ -49,6 +49,12 @@ def build_parser():
     alerts.add_argument("--alert-id")
     alerts.add_argument("--set-status", choices=("acknowledged", "closed"))
 
+    queue = commands.add_parser("queue", help="show alerts requiring attention")
+    queue.add_argument("--host", dest="hostname")
+    queue.add_argument("--priority", choices=("P1", "P2", "P3", "P4"))
+    queue.add_argument("--limit", type=int, default=20)
+    queue.add_argument("--include-acknowledged", action="store_true")
+
     commands.add_parser("status", help="show health and runtime metrics")
     hosts = commands.add_parser("hosts", help="list or inspect observed hosts")
     hosts.add_argument("hostname", nargs="?")
@@ -150,6 +156,11 @@ def _invoke(service, args):
             if getattr(args, name) is not None
         }
         return service.search_alerts(**filters)
+    if args.command == "queue":
+        return service.attention_queue(
+            hostname=args.hostname, priority=args.priority, limit=args.limit,
+            include_acknowledged=args.include_acknowledged,
+        )
     if args.command == "hosts":
         if args.detail:
             if not args.hostname:
