@@ -21,7 +21,7 @@ class ResponseModelContractTests(unittest.TestCase):
     def test_investigation_converts_internal_mappings_to_typed_models(self):
         profile = HostProfileV1.from_mapping({"hostname": "HOST", "total_events": 1})
         correlation = CorrelationV1.from_mapping({
-            "host": "HOST", "parent_process": "a", "process_name": "b", "count": 1,
+            "hostname": "HOST", "parent_process": "a", "process_name": "b", "count": 1,
         })
         detection = DetectionV1.from_mapping({
             "rule_name": "r", "severity": "high", "reason": "why", "event": {"host": "HOST"},

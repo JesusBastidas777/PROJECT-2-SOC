@@ -51,7 +51,7 @@ class HostProfileV1:
 
 @dataclass(frozen=True)
 class CorrelationV1:
-    host: str
+    hostname: str
     parent_process: str
     process_name: str
     count: int
