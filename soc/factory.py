@@ -7,6 +7,7 @@ from alerting.attention_queue import AttentionQueue
 from correlation.alert_grouping import AlertGrouping
 from investigation.event_search import EventSearch
 from incident.incident_service import IncidentService
+from incident.incident_timeline import IncidentTimeline
 from investigation.host_detail import HostDetail
 from inventory.host_catalog import HostCatalog
 from investigation.investigation_service import InvestigationService
@@ -50,6 +51,7 @@ class SOCComponents:
     risk: HostRiskService
     alert_grouping: AlertGrouping
     incidents: IncidentService
+    incident_timeline: IncidentTimeline
 
 
 def build_components(config=None):
@@ -108,4 +110,5 @@ def build_components(config=None):
         risk=risk,
         alert_grouping=alert_grouping,
         incidents=incidents,
+        incident_timeline=IncidentTimeline(incidents, alerts, reader),
     )

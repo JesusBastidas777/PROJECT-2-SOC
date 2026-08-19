@@ -132,6 +132,13 @@ class SOCService:
         incident = self._components.incidents.transition(incident_id, status)
         return SOCResponseV1(data={"incident": incident})
 
+    def get_incident_timeline(self, incident_id, **options):
+        timeline = self._components.incident_timeline.build(incident_id, **options)
+        return SOCResponseV1(
+            data={"timeline": timeline},
+            metadata={"count": len(timeline["entries"]), "total": timeline["total"]},
+        )
+
     def transition_alert(self, alert_id, status):
         alert = self._components.alerts.transition(alert_id, status)
         return SOCResponseV1(data={"alert": alert})

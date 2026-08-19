@@ -177,11 +177,14 @@ class CLITests(unittest.TestCase):
         transitioned = self.run_cli(
             "incidents", incident_id, "--status", "investigating"
         )
+        timeline = self.run_cli("incidents", incident_id, "--timeline", "--limit", "2")
         self.assertTrue(json.loads(fetched.stdout)["metadata"]["found"])
         self.assertEqual(
             json.loads(transitioned.stdout)["data"]["incident"]["status"],
             "investigating",
         )
+        self.assertEqual(timeline.returncode, 0, timeline.stderr)
+        self.assertLessEqual(len(json.loads(timeline.stdout)["data"]["timeline"]["entries"]), 2)
 
 
 if __name__ == "__main__":

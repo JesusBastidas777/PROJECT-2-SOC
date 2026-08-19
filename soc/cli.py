@@ -70,6 +70,9 @@ def build_parser():
         "--status", choices=("open", "investigating", "contained", "closed")
     )
     incidents.add_argument("--host", dest="hostname")
+    incidents.add_argument("--timeline", action="store_true")
+    incidents.add_argument("--sort-order", choices=("oldest", "newest"), default="oldest")
+    incidents.add_argument("--limit", type=int, default=100)
 
     commands.add_parser("status", help="show health and runtime metrics")
     hosts = commands.add_parser("hosts", help="list or inspect observed hosts")
@@ -188,6 +191,12 @@ def _invoke(service, args):
             return service.create_incident(
                 alert_ids=args.alert_ids, group_id=args.group_id,
                 title=args.title, summary=args.summary,
+            )
+        if args.timeline:
+            if not args.incident_id:
+                raise ValueError("--timeline requires an incident ID")
+            return service.get_incident_timeline(
+                args.incident_id, sort_order=args.sort_order, limit=args.limit
             )
         if args.status and args.incident_id:
             return service.transition_incident(args.incident_id, args.status)
