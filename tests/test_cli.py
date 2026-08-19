@@ -119,6 +119,15 @@ class CLITests(unittest.TestCase):
         payload = json.loads(result.stdout)["data"]["compaction"]
         self.assertFalse(payload["applied"])
 
+    def test_backup_create_verify_and_restore_dry_run(self):
+        backup = Path(self.directory.name) / "backup"
+        created = self.run_cli("backup", "create", str(backup))
+        verified = self.run_cli("backup", "verify", str(backup))
+        restored = self.run_cli("backup", "restore", str(backup), "--dry-run")
+        self.assertEqual(created.returncode, 0, created.stderr)
+        self.assertTrue(json.loads(verified.stdout)["data"]["backup"]["valid"])
+        self.assertTrue(json.loads(restored.stdout)["data"]["restore"]["dry_run"])
+
 
 if __name__ == "__main__":
     unittest.main()

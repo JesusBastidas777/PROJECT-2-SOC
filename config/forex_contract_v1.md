@@ -46,6 +46,12 @@ Alert compaction is separately available through `plan_alert_compaction` and
 checksummed manifest before keeping one current record per alert in the active
 log. Repeating compaction on an already compact log is a no-op. Event records
 are never compacted by this operation.
+
+`create_backup`, `verify_backup`, and `restore_backup` manage a consistent
+events-and-alerts snapshot with relative paths, sizes, SHA-256 checksums, and a
+versioned logical signature. Restore supports dry-run, creates a pre-restore
+safety backup, replaces both stores under ordered locks, rolls back both on a
+partial failure, and rebuilds derived UID data.
 Every method returns `SOCResponseV1`. Its JSON shape is:
 
 ```json

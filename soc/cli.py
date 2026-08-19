@@ -77,6 +77,15 @@ def build_parser():
     retention.add_argument("--apply", action="store_true")
     compact = commands.add_parser("compact-alerts", help="plan or compact alert history")
     compact.add_argument("--apply", action="store_true")
+    backup = commands.add_parser("backup", help="create, verify, or restore a SOC backup")
+    backup_commands = backup.add_subparsers(dest="backup_command", required=True)
+    backup_create = backup_commands.add_parser("create")
+    backup_create.add_argument("path", type=Path)
+    backup_verify = backup_commands.add_parser("verify")
+    backup_verify.add_argument("path", type=Path)
+    backup_restore = backup_commands.add_parser("restore")
+    backup_restore.add_argument("path", type=Path)
+    backup_restore.add_argument("--dry-run", action="store_true")
     return parser
 
 
@@ -145,6 +154,12 @@ def _invoke(service, args):
         return service.apply_retention(**options) if args.apply else service.plan_retention(**options)
     if args.command == "compact-alerts":
         return service.compact_alerts() if args.apply else service.plan_alert_compaction()
+    if args.command == "backup":
+        if args.backup_command == "create":
+            return service.create_backup(args.path)
+        if args.backup_command == "verify":
+            return service.verify_backup(args.path)
+        return service.restore_backup(args.path, dry_run=args.dry_run)
     return service.status()
 
 

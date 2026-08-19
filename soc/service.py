@@ -162,6 +162,21 @@ class SOCService:
             "compaction": self._components.alert_compaction.apply()
         })
 
+    def create_backup(self, destination):
+        return SOCResponseV1(data={"backup": self._components.backup.create(destination)})
+
+    def verify_backup(self, source):
+        result = self._components.backup.verify(source)
+        return SOCResponseV1(
+            status="success" if result["valid"] else "degraded",
+            data={"backup": result},
+        )
+
+    def restore_backup(self, source, *, dry_run=False):
+        return SOCResponseV1(data={
+            "restore": self._components.backup.restore(source, dry_run=dry_run)
+        })
+
     def health(self):
         health = self._components.status.health()
         return SOCResponseV1(

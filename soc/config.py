@@ -24,6 +24,7 @@ class SOCConfig:
     search_limit_max: int = 500
     retention_archive_dir: Optional[Path] = None
     alert_archive_dir: Optional[Path] = None
+    backup_dir: Optional[Path] = None
 
     def __post_init__(self):
         base_dir = Path(self.base_dir).expanduser().resolve()
@@ -43,6 +44,9 @@ class SOCConfig:
         object.__setattr__(
             self, "alert_archive_dir",
             _path(str(self.alert_archive_dir or "storage/archive"), base_dir),
+        )
+        object.__setattr__(
+            self, "backup_dir", _path(str(self.backup_dir or "storage/backups"), base_dir)
         )
         if self.timeline_limit <= 0:
             raise ValueError("timeline_limit must be positive")
@@ -74,6 +78,7 @@ class SOCConfig:
             "alert_archive_dir": overrides.pop(
                 "alert_archive_dir", values.get("SOC_ALERT_ARCHIVE_DIR")
             ),
+            "backup_dir": overrides.pop("backup_dir", values.get("SOC_BACKUP_DIR")),
         }
         if overrides:
             raise TypeError("unknown configuration: " + ", ".join(sorted(overrides)))

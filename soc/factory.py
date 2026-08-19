@@ -17,6 +17,7 @@ from storage.data_transfer import DataTransfer
 from storage.integrity_service import IntegrityService
 from storage.retention_service import RetentionService
 from storage.compaction_service import AlertCompactionService
+from storage.backup_service import BackupService
 
 
 @dataclass
@@ -36,6 +37,7 @@ class SOCComponents:
     host_details: HostDetail
     retention: RetentionService
     alert_compaction: AlertCompactionService
+    backup: BackupService
 
 
 def build_components(config=None):
@@ -69,5 +71,9 @@ def build_components(config=None):
         ),
         alert_compaction=AlertCompactionService(
             config.alerts_path, config.alert_archive_dir, config.lock_timeout
+        ),
+        backup=BackupService(
+            config.events_path, config.alerts_path, store.uid_index,
+            config.backup_dir, config.lock_timeout,
         ),
     )
