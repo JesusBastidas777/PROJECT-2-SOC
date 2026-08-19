@@ -49,7 +49,11 @@ class HostProfile:
 
         for event in events:
 
-            process_name = event["process_name"]
+            process_name = event.get("process_name")
+
+            if process_name is None:
+
+                continue
 
             if process_name not in processes_count:
 
@@ -149,7 +153,6 @@ class HostProfile:
         print(f"Unique Users: {profile['unique_users']}")
 
         print(f"Recent Processes: {profile['recent_processes']}")
-
 
 
 

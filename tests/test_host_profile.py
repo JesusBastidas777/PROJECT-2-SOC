@@ -85,6 +85,12 @@ class HostProfileTests(unittest.TestCase):
         self.assertEqual(profile["users"], [])
         self.assertEqual(profile["event_ids"], [])
 
+    def test_event_without_process_name_does_not_break_profile(self):
+        self.write_events([{"host": "LEGACY", "event_id": 3}])
+        profile = self.profile_builder.build("LEGACY")
+        self.assertEqual(profile["total_events"], 1)
+        self.assertEqual(profile["processes"], {})
+
 
 if __name__ == "__main__":
 
