@@ -53,6 +53,19 @@ def build_parser():
     summary.add_argument("--start", dest="start_timestamp")
     summary.add_argument("--end", dest="end_timestamp")
     summary.add_argument("--limit", type=int)
+    export = commands.add_parser("export", help="export events as JSONL")
+    export.add_argument("path", type=Path)
+    export.add_argument("--host", dest="hostname")
+    export.add_argument("--source")
+    export.add_argument("--severity")
+    export.add_argument("--start", dest="start_timestamp")
+    export.add_argument("--end", dest="end_timestamp")
+    import_command = commands.add_parser("import", help="import canonical JSONL events")
+    import_command.add_argument("path", type=Path)
+    import_command.add_argument("--dry-run", action="store_true")
+    integrity = commands.add_parser("integrity", help="audit or repair event storage")
+    integrity.add_argument("--repair", action="store_true")
+    integrity.add_argument("--quarantine-path", type=Path)
     return parser
 
 
@@ -101,6 +114,17 @@ def _invoke(service, args):
             if getattr(args, name) is not None
         }
         return service.operational_summary(**filters)
+    if args.command == "export":
+        filters = {
+            name: getattr(args, name)
+            for name in ("hostname", "source", "severity", "start_timestamp", "end_timestamp")
+            if getattr(args, name) is not None
+        }
+        return service.export_events(args.path, **filters)
+    if args.command == "import":
+        return service.import_events(args.path, dry_run=args.dry_run)
+    if args.command == "integrity":
+        return service.repair_storage(args.quarantine_path) if args.repair else service.audit_storage()
     return service.status()
 
 

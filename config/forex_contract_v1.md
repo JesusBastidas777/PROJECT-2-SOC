@@ -15,7 +15,8 @@ payload = result.to_dict()
 
 The stable methods are `ingest_event`, `search_events`, `investigate_host`, `analyze_host`,
 `create_alerts`, `search_alerts`, `transition_alert`, `list_hosts`, `get_host`, `health`,
-`operational_summary`, `metrics`, and `status`.
+`operational_summary`, `export_events`, `import_events`, `audit_storage`,
+`repair_storage`, `metrics`, and `status`.
 Every method returns `SOCResponseV1`. Its JSON shape is:
 
 ```json
@@ -49,3 +50,8 @@ priority and are ordered by priority then creation time.
 optional UTC interval and host. It includes event dimensions, active hosts,
 alert priority/state, top detections, data-quality counters, and an
 `attention_required` indicator.
+
+JSONL transfer uses the same validation and idempotency rules as direct
+ingestion. Integrity auditing is read-only. Repair is explicit and runs under
+an exclusive lock, preserving the original as a backup and copying invalid
+records with line details to a quarantine JSONL file.

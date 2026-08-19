@@ -102,6 +102,24 @@ class SOCService:
             summary = self._components.reporting.build(**filters)
         return SOCResponseV1(data={"summary": OperationalSummaryV1.from_mapping(summary)})
 
+    def export_events(self, destination, **filters):
+        return SOCResponseV1(data={"export": self._components.transfer.export_events(
+            destination, **filters
+        )})
+
+    def import_events(self, source, *, dry_run=False):
+        return SOCResponseV1(data={"import": self._components.transfer.import_events(
+            source, dry_run=dry_run
+        )})
+
+    def audit_storage(self):
+        return SOCResponseV1(data={"integrity": self._components.integrity.audit()})
+
+    def repair_storage(self, quarantine_path=None):
+        return SOCResponseV1(data={"integrity": self._components.integrity.repair(
+            quarantine_path
+        )})
+
     def health(self):
         health = self._components.status.health()
         return SOCResponseV1(

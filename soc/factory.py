@@ -12,6 +12,8 @@ from reporting.operational_summary import OperationalSummary
 from soc.config import SOCConfig
 from storage.event_reader import EventReader
 from storage.event_store import EventStore
+from storage.data_transfer import DataTransfer
+from storage.integrity_service import IntegrityService
 
 
 @dataclass
@@ -26,6 +28,8 @@ class SOCComponents:
     status: StatusService
     inventory: HostCatalog
     reporting: OperationalSummary
+    transfer: DataTransfer
+    integrity: IntegrityService
 
 
 def build_components(config=None):
@@ -34,11 +38,13 @@ def build_components(config=None):
     alerts = AlertService(config.alerts_path, lock_timeout=config.lock_timeout)
     status = StatusService(reader, alerts)
     investigation = InvestigationService(reader)
+    store = EventStore(config.events_path, lock_timeout=config.lock_timeout)
+    normalizer = EventNormalizer()
     return SOCComponents(
         config=config,
         reader=reader,
-        store=EventStore(config.events_path, lock_timeout=config.lock_timeout),
-        normalizer=EventNormalizer(),
+        store=store,
+        normalizer=normalizer,
         search=EventSearch(reader),
         investigation=investigation,
         alerts=alerts,
@@ -47,4 +53,6 @@ def build_components(config=None):
         reporting=OperationalSummary(
             reader, alerts, investigation.detection_engine, status
         ),
+        transfer=DataTransfer(reader, store, normalizer, config.lock_timeout),
+        integrity=IntegrityService(config.events_path, config.lock_timeout),
     )
